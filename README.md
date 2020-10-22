@@ -1,3 +1,3 @@
 # RipOffIMDb
 
-* Current Status: Brainstorm Design
+# Current Status: Brainstorm Design
