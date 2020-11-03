@@ -5,10 +5,10 @@
 ################################################################################
 from urllib.request import urlopen
 import pandas as pd, csv, json
+import sys
 
 csv_default = 'movie_database.csv'
 movie_id_csv = 'imdb_movies_id.csv'
-
 
 def data_extraction():
     """
@@ -53,5 +53,17 @@ def data_extraction():
             writer.writerow(page_json)
             i += 1
 
+def get_config(config='config.txt'):
+    configurations = []
+    with open(config, "r") as f:
+        configurations = [line.strip() for line in f]
+    if  len(configurations) != 2:
+        sys.exit("Improper configurations! Check config file for only thte api key and tuple id")
+    configurations[1] = int(configurations[1])
+    return configurations
+
+
 if __name__ == "__main__":
-    data_extraction()
+    config = get_config()
+    print(config)
+    # data_extraction()
