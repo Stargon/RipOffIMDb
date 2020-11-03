@@ -3,6 +3,10 @@
 # This module will extract data from the omdb API using the movie id that was
 # extracted from IMDB.
 ################################################################################
+# It will require a "config.txt" file. The file should contain the follwing:
+# api key
+# row number to start on in the imdb_movies_id.csv
+################################################################################
 from urllib.request import urlopen
 from urllib.error import HTTPError
 import pandas as pd, csv, json
@@ -25,14 +29,18 @@ def data_extraction(configs = None):
                   'Director', 'Release_date', 'Genre',
                   'Awards', 'Critic_Score', 'Runtime']
     
-    # Formulate api key
+    # Formulate api key and specify number of requests 
+    # Note: max api calls is 1000 requests per day
     api_key = "".join(["&apikey=", config[0]])
-    # start reading data from line skiprow+1, read only 1000 lines at a time (limit on total api calls per day)
+    num_req = 1000
+    # start reading data from line skiprow+1
     i = configs[1] 
-    movie_ids = pd.read_csv(movie_id_csv, skiprows=(i - 1), nrows=1000)
+    movie_ids = pd.read_csv(movie_id_csv, skiprows=(i - 1), nrows=num_req)
     csv_output = open(csv_default, 'a')
     writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
-    writer.writeheader()
+    if csv_output.tell() == 0:
+        # New csv, generate headers 
+        writer.writeheader()
     for index, row in movie_ids.iterrows():
         extract_from_api = 'http://www.omdbapi.com/?i=' + row[0] + api_key 
         # Try to extract url key
