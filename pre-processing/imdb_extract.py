@@ -21,7 +21,7 @@ def data_extraction(configs = None):
     the omdb api and insert that data into csv_default
     """
     # Test if configurations are given
-    if configs == None or len(configs) != 2:
+    if configs == None:
         sys.exit("No configurations given!")
     elif len(configs) != 2:
         sys.exit("Improper configurations given!")
