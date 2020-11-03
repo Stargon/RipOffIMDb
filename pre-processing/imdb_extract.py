@@ -4,6 +4,7 @@
 # extracted from IMDB.
 ################################################################################
 from urllib.request import urlopen
+from urllib.error import HTTPError
 import pandas as pd, csv, json
 import sys
 
@@ -34,7 +35,15 @@ def data_extraction(configs = None):
     writer.writeheader()
     for index, row in movie_ids.iterrows():
         extract_from_api = 'http://www.omdbapi.com/?i=' + row[0] + api_key 
-        data = urlopen(extract_from_api).read()
+        # Try to extract url key
+        try:
+            data = urlopen(extract_from_api).read()
+        except HTTPError as err:
+            if err.code == 401:
+                print('Unauthorized 401 error, most likely api key limit reached!')
+            else:
+                print(f'HTTPS Error: {err.code}')
+            break
         data = json.loads(data)
         
         # some of the imdb id's do not produce results in the api, this skips over those movie ids
