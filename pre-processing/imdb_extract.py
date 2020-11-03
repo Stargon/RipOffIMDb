@@ -20,42 +20,46 @@ def data_extraction(configs = None):
         sys.exit("No configurations given!")
     elif len(configs) != 2:
         sys.exit("Improper configurations given!")
-#    fieldnames = ['id', 'image_url', 'page_url', 'Title', 'Actors', 'Production',
-#                  'Director', 'Release_date', 'Genre',
-#                  'Awards', 'Critic_Score', 'Runtime']
-#    
-#    # start reading data from line skiprow+1, read only 1000 lines at a time (limit on total api calls per day)
-#    movie_ids = pd.read_csv(movie_id_csv, skiprows=370999, nrows=1000)
-#    csv_output = open(csv_default, 'a')
-#    writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
-#    writer.writeheader()
-#    i = 371000
-#    for index, row in movie_ids.iterrows():
-#        extract_from_api = 'http://www.omdbapi.com/?i=' + row[0] + '&apikey=da105487'
-#        data = urlopen(extract_from_api).read()
-#        data = json.loads(data)
-#        
-#        # some of the imdb id's do not produce results in the api, this skips over those movie ids
-#        if 'Error' in data:
-#            continue
-#        else:
-#            csvoutput = csv.writer(csv_output)
-#            page_json = {
-#                        fieldnames[0]: i,
-#                        fieldnames[1]: data['Poster'],
-#                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/',
-#                        fieldnames[3]: data['Title'],
-#                        fieldnames[4]: data['Actors'],
-#                        fieldnames[5]: data['Production'],
-#                        fieldnames[6]: data['Director'],
-#                        fieldnames[7]: data['Released'],
-#                        fieldnames[8]: data['Genre'],
-#                        fieldnames[9]: data['Awards'],
-#                        fieldnames[10]: data['Ratings'],
-#                        fieldnames[11]: data['Runtime']
-#            }
-#            writer.writerow(page_json)
-#            i += 1
+    fieldnames = ['id', 'image_url', 'page_url', 'Title', 'Actors', 'Production',
+                  'Director', 'Release_date', 'Genre',
+                  'Awards', 'Critic_Score', 'Runtime']
+    
+    # Formulate api key
+    api_key = "".join(["&apikey=", config[0]])
+    # start reading data from line skiprow+1, read only 1000 lines at a time (limit on total api calls per day)
+    i = configs[1] 
+    movie_ids = pd.read_csv(movie_id_csv, skiprows=(i - 1), nrows=1000)
+    csv_output = open(csv_default, 'a')
+    writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
+    writer.writeheader()
+    for index, row in movie_ids.iterrows():
+        extract_from_api = 'http://www.omdbapi.com/?i=' + row[0] + api_key 
+        data = urlopen(extract_from_api).read()
+        data = json.loads(data)
+        
+        # some of the imdb id's do not produce results in the api, this skips over those movie ids
+        if 'Error' in data:
+            continue
+        else:
+            csvoutput = csv.writer(csv_output)
+            page_json = {
+                        fieldnames[0]: i,
+                        fieldnames[1]: data['Poster'],
+                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/',
+                        fieldnames[3]: data['Title'],
+                        fieldnames[4]: data['Actors'],
+                        fieldnames[5]: data['Production'],
+                        fieldnames[6]: data['Director'],
+                        fieldnames[7]: data['Released'],
+                        fieldnames[8]: data['Genre'],
+                        fieldnames[9]: data['Awards'],
+                        fieldnames[10]: data['Ratings'],
+                        fieldnames[11]: data['Runtime']
+            }
+            writer.writerow(page_json)
+            i += 1
+    # Return original api key and new row index
+    return [config[0], i]
 
 def get_config(config='config.txt'):
     configurations = []
@@ -68,5 +72,11 @@ def get_config(config='config.txt'):
 
 
 if __name__ == "__main__":
-    config = get_config()
-    data_extraction(configs=config)
+    # Get configurations for execution
+    config_file = 'config.txt'
+    config = get_config(config=config_file)
+    # Begin extraction
+    config = data_extraction(configs=config)
+    # update config file
+    with open(config_file, "w") as f:
+        f.write(f'{config[0]}\n{config[1]}')
