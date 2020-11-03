@@ -87,7 +87,7 @@ def get_config(config='config.txt'):
     with open(config, "r") as f:
         configurations = [line.strip() for line in f]
     if  len(configurations) != 2:
-        sys.exit("Improper configurations! Check config file for only thte api key and tuple id")
+        sys.exit("Improper configurations! Check config file for only the api key and tuple id")
     configurations[1] = int(configurations[1])
     return configurations
 
