@@ -12,7 +12,7 @@ from urllib.error import HTTPError
 import pandas as pd, csv, json
 import sys
 
-csv_default = 'movie_database.csv'
+csv_default = 'imdb_movie_database.csv'
 movie_id_csv = 'imdb_movies_id.csv'
 
 def data_extraction(configs = None):
