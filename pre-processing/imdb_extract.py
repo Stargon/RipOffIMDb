@@ -44,17 +44,17 @@ def data_extraction(configs = None):
             csvoutput = csv.writer(csv_output)
             page_json = {
                         fieldnames[0]: i,
-                        fieldnames[1]: data['Poster'],
-                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/',
-                        fieldnames[3]: data['Title'],
-                        fieldnames[4]: data['Actors'],
-                        fieldnames[5]: data['Production'],
-                        fieldnames[6]: data['Director'],
-                        fieldnames[7]: data['Released'],
-                        fieldnames[8]: data['Genre'],
-                        fieldnames[9]: data['Awards'],
-                        fieldnames[10]: data['Ratings'],
-                        fieldnames[11]: data['Runtime']
+                        fieldnames[1]: data['Poster'] if 'Poster' in data else '',
+                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/' if 'imdbID' in data else '',
+                        fieldnames[3]: data['Title'] if 'Title' in data else '',
+                        fieldnames[4]: data['Actors'] if 'Actors' in data else '',
+                        fieldnames[5]: data['Production'] if 'Production' in data else '',
+                        fieldnames[6]: data['Director'] if 'Director' in data else '',
+                        fieldnames[7]: data['Released'] if 'Released' in data else '',
+                        fieldnames[8]: data['Genre'] if 'Genre' in data else '',
+                        fieldnames[9]: data['Awards'] if 'Awards' in data else '',
+                        fieldnames[10]: data['Ratings'] if 'Ratings' in data else '',
+                        fieldnames[11]: data['Runtime'] if 'Runtime' in data else ''
             }
             writer.writerow(page_json)
             i += 1
