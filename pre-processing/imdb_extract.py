@@ -1,4 +1,4 @@
-#!/usr/bin python3
+#!/usr/bin/env python3
 ################################################################################
 # This module will extract data from the omdb API using the movie id that was
 # extracted from IMDB.
