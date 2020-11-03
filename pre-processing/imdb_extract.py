@@ -61,17 +61,17 @@ def data_extraction(configs = None):
             csvoutput = csv.writer(csv_output)
             page_json = {
                         fieldnames[0]: i,
-                        fieldnames[1]: data['Poster'] if 'Poster' in data else '',
-                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/' if 'imdbID' in data else '',
-                        fieldnames[3]: data['Title'] if 'Title' in data else '',
-                        fieldnames[4]: data['Actors'] if 'Actors' in data else '',
-                        fieldnames[5]: data['Production'] if 'Production' in data else '',
-                        fieldnames[6]: data['Director'] if 'Director' in data else '',
-                        fieldnames[7]: data['Released'] if 'Released' in data else '',
-                        fieldnames[8]: data['Genre'] if 'Genre' in data else '',
-                        fieldnames[9]: data['Awards'] if 'Awards' in data else '',
-                        fieldnames[10]: data['Ratings'] if 'Ratings' in data else '',
-                        fieldnames[11]: data['Runtime'] if 'Runtime' in data else ''
+                        fieldnames[1]: data['Poster'] if 'Poster' in data else 'N/A',
+                        fieldnames[2]: 'https://www.imdb.com/title/' + data['imdbID'] + '/' if 'imdbID' in data else 'N/A',
+                        fieldnames[3]: data['Title'] if 'Title' in data else 'N/A',
+                        fieldnames[4]: data['Actors'] if 'Actors' in data else 'N/A',
+                        fieldnames[5]: data['Production'] if 'Production' in data else 'N/A',
+                        fieldnames[6]: data['Director'] if 'Director' in data else 'N/A',
+                        fieldnames[7]: data['Released'] if 'Released' in data else 'N/A',
+                        fieldnames[8]: data['Genre'] if 'Genre' in data else 'N/A',
+                        fieldnames[9]: data['Awards'] if 'Awards' in data else 'N/A',
+                        fieldnames[10]: data['Ratings'] if 'Ratings' in data else 'N/A',
+                        fieldnames[11]: data['Runtime'] if 'Runtime' in data else 'N/A'
             }
             writer.writerow(page_json)
             i += 1
