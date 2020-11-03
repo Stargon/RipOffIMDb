@@ -3,7 +3,7 @@
 # This module will extract data from the omdb API using the movie id that was
 # extracted from IMDB.
 ################################################################################
-# It will require a "config.txt" file. The file should contain the follwing:
+# It will require a "config.txt" file. The file should contain the following:
 # api key
 # row number to start on in the imdb_movies_id.csv
 ################################################################################
@@ -75,10 +75,14 @@ def data_extraction(configs = None):
             }
             writer.writerow(page_json)
             i += 1
-    # Return original api key and new row index
+    # Return original api key and new row index to start on
     return [config[0], i]
 
 def get_config(config='config.txt'):
+    """
+    get_config will take a filename, and extract the api key to use, and the row
+    number to start on
+    """
     configurations = []
     with open(config, "r") as f:
         configurations = [line.strip() for line in f]
@@ -87,7 +91,7 @@ def get_config(config='config.txt'):
     configurations[1] = int(configurations[1])
     return configurations
 
-
+# Main execution of the program
 if __name__ == "__main__":
     # Get configurations for execution
     config_file = 'config.txt'
