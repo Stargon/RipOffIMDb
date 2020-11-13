@@ -1,15 +1,14 @@
-import SearchBar from "material-ui-search-bar";
-import React from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
+import SearchBar from "material-ui-search-bar"
+import React from "react"
+import AppBar from "@material-ui/core/AppBar"
+import Toolbar from "@material-ui/core/Toolbar"
 
 export default class TextBar extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       value: "",
-    };
+    }
   }
 
   render() {

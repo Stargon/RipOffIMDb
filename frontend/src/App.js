@@ -1,10 +1,10 @@
 import './App.css';
-import TextBar from './components/SearchBar'
+import SearchEngine from './components/SearchEngine'
 
 function App() {
   return (
     <div className="App">
-    <div className="App"><TextBar/></div>
+    <div className="App"><SearchEngine/></div>
       <header className="App-header">
         <p>
           Edit <code>src/App.js</code> and save to reload.
