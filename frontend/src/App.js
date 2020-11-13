@@ -4,8 +4,8 @@ import TextBar from './components/SearchBar'
 function App() {
   return (
     <div className="App">
+    <div className="App"><TextBar/></div>
       <header className="App-header">
-        <div className="App"><TextBar/></div>
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
