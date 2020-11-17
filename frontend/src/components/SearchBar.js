@@ -12,8 +12,9 @@ export default class TextBar extends React.Component {
   }
 
   // Event handler to return the query
-  onRequestSearchEvent(query){
+  onRequestSearchEvent(query) {
     alert(query)
+    this.props.query(query)
   }
 
   render() {
@@ -23,8 +24,8 @@ export default class TextBar extends React.Component {
           <Toolbar>
             <SearchBar
               value={this.state.value}
-              onChange={(newValue) => this.setState({value: newValue})}
-              onRequestSearch={() => {this.onRequestSearchEvent(this.state.value)}}
+              onChange={(newValue) => this.setState({ value: newValue })}
+              onRequestSearch={() => { this.onRequestSearchEvent(this.state.value) }}
               style={{
                 margin: "0 auto",
                 width: "80%"
