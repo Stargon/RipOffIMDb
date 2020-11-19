@@ -130,7 +130,11 @@ export default class SearchEngine extends React.Component {
       //  render everything
       return (
         <React.Fragment>
-          <TextBar query={this.handleQueryUpdate}></TextBar>
+            <Grid container spacing={3}>
+                <Grid item xs={12}>
+                <TextBar query={this.handleQueryUpdate}></TextBar>
+                </Grid>
+                <Grid item>
           <CssBaseline />
           {/* <AppBar position="relative">
             <Toolbar>
@@ -220,6 +224,9 @@ export default class SearchEngine extends React.Component {
               </Grid>
             </Container>
           </main>
+
+                </Grid>
+            </Grid>
         </React.Fragment>
       );
     } else {
