@@ -2,14 +2,17 @@ from BKTree_Node import BKTreeNode
 
 
 class BKTree(object):
-    def __init__(self, vocabulary, root_index):
-        # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
-        self.root = BKTreeNode(vocabulary[root_index])
-        for word in vocabulary:
-            # don't add the root twice!
-            if word == vocabulary[root_index]:
-                continue
-            self.add_word(word)
+    def __init__(self, vocabulary, root_index, root=None):
+        if root:
+            self.root = root
+        else:
+            # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
+            self.root = BKTreeNode(vocabulary[root_index])
+            for word in vocabulary:
+                # don't add the root twice!
+                if word == vocabulary[root_index]:
+                    continue
+                self.add_word(word)
 
     def add_word(self, word):
         self.add_node(self.root, BKTreeNode(word))
@@ -49,12 +52,35 @@ class BKTree(object):
         print('L')
         self.print_tree(current_node.left_child)
 
+    def autocorrect(self, word, distance):
+        # takes a word and a distance, compares the word to the tree, returns all words that are within the distance
+        possibilities = list()
+        # check the root first
+        node = BKTreeNode(word)
+        root_distance = node.edit_distance(self.root)
+        if root_distance > distance:
+            return possibilities
+        possibilities.append((self.root.text, root_distance))
+        self.autocorrect_helper(distance, self.root, possibilities)
+        return possibilities
+
+    def autocorrect_helper(self, distance, current_node, possibilities):
+        if current_node is None:
+            return
+        right = current_node.right_child
+        left = current_node.left_child
+        if right is not None and right.distance_to_parent <= distance:
+            possibilities.append((right.text, right.distance_to_parent))
+            self.autocorrect_helper(distance, right, possibilities)
+        if left is not None and left.distance_to_parent <= distance:
+            possibilities.append((left.text, left.distance_to_parent))
+            self.autocorrect_helper(distance, left, possibilities)
 
 
 def main():
     vocabulary = ['apple', 'banana', 'orange', 'grape', 'pie']
-    tree = BKTree(vocabulary, 0)
-    tree.print_tree(tree.root)
+    tree = BKTree(vocabulary, 1)
+    print(tree.autocorrect('havana', 2))
 
 
 if __name__ == '__main__':
