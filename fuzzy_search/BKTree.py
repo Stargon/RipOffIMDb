@@ -2,17 +2,14 @@ from BKTree_Node import BKTreeNode
 
 
 class BKTree(object):
-    def __init__(self, vocabulary, root_index, root=None):
-        if root:
-            self.root = root
-        else:
-            # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
-            self.root = BKTreeNode(vocabulary[root_index])
-            for word in vocabulary:
-                # don't add the root twice!
-                if word == vocabulary[root_index]:
-                    continue
-                self.add_word(word)
+    def __init__(self, vocabulary, root_index):
+        # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
+        self.root = BKTreeNode(vocabulary[root_index])
+        for word in vocabulary:
+            # don't add the root twice!
+            if word == vocabulary[root_index]:
+                continue
+            self.add_word(word)
 
     def add_word(self, word):
         self.add_node(self.root, BKTreeNode(word))

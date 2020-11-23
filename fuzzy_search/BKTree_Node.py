@@ -33,7 +33,7 @@ class BKTreeNode(object):
                     # fill out the array
                     # take the minimum of my surroundings
                     value = self.minimum([distances[i - 1][j], distances[i][j - 1], distances[i - 1][j - 1]])
-                    # are the letters the same?
+                    # are the letters different?
                     if self.text[j - 1] != node.text[i - 1]:
                         value += 1
                     # add to the distances
