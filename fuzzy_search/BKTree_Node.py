@@ -35,7 +35,7 @@ class BKTreeNode(object):
                     # take the minimum of my surroundings
                     value = self.minimum([distances[i - 1][j], distances[i][j - 1], distances[i - 1][j - 1]])
                     # are the letters the same?
-                    if self.text[i-1] != node.text[j-1]:
+                    if self.text[j-1] != node.text[i-1]:
                         value += 1
                     # add to the distances
                     distances[i][j] = value
@@ -45,7 +45,7 @@ class BKTreeNode(object):
 
 def main():
     node1 = BKTreeNode('apple')
-    node2 = BKTreeNode('hands')
+    node2 = BKTreeNode('banana')
     print(node1.editDistance(node2))
 
 
