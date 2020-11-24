@@ -49,7 +49,7 @@ class BKTree(object):
         distance = current_node.edit_distance(compare_node)
         # if it's a good word, add it
         if distance <= tolerance:
-            possibilities.append((current_node.text, current_node.distance_to_parent))
+            possibilities.append((current_node.text, distance))
 
         # check all the children, only recurse for ones within the range
         r = [distance - tolerance, distance + tolerance]
@@ -62,7 +62,7 @@ def main():
     vocabulary = ['neat', 'beat', 'beet', 'greet', 'skeet', 'havana', 'banana']
     tree = BKTree(vocabulary, 1)
     tree.print_tree(tree.root)
-    print(tree.autocorrect('banana', 2))
+    print(tree.autocorrect('banana', 1))
 
 
 if __name__ == '__main__':
