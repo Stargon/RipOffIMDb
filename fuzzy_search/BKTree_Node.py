@@ -1,9 +1,8 @@
 class BKTreeNode(object):
     def __init__(self, text):
         self.text = text
-        self.left_child = None
-        self.right_child = None
-        self.distance_to_parent=0
+        self.children = list()
+        self.distance_to_parent = 0
 
     def minimum(self, numbers):
         x = numbers[0]

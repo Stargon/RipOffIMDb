@@ -16,68 +16,53 @@ class BKTree(object):
 
     def add_node(self, current_node, node):
         distance = node.edit_distance(current_node)
-        # try to add to current node's children
-        if current_node.right_child is None:
-            current_node.right_child = node
-            node.distance_to_parent = distance
-        elif current_node.left_child is None:
-            # compare first, might need to swap places
-            if distance > current_node.right_child.distance_to_parent:
-                current_node.left_child = current_node.right_child
-                current_node.right_child = node
-                node.distance_to_parent = distance
-            elif distance == current_node.right_child.distance_to_parent:
-                self.add_node(current_node.right_child, node)
-            else:
-                current_node.left_child = node
-                node.distance_to_parent = distance
+        # is my distance the same as any pre-existing children?
+        for n in current_node.children:
+            if n.distance_to_parent == distance:
+                # recurse down the tree
+                self.add_node(n, node)
+                return
 
-        # move down the tree
-        else:
-            if distance >= current_node.right_child.distance_to_parent:
-                self.add_node(current_node.right_child, node)
-            else:
-                self.add_node(current_node.left_child, node)
+        # if there wasn't a match, add it to the children
+        node.distance_to_parent = distance
+        current_node.children.append(node)
 
     def print_tree(self, current_node):
         if current_node is None:
-            print('NONE')
             return
-        print(current_node.text, current_node.distance_to_parent)
-        print('R')
-        self.print_tree(current_node.right_child)
-        print('L')
-        self.print_tree(current_node.left_child)
+        child_words = list()
+        for node in current_node.children:
+            child_words.append(node.text)
+        print(current_node.text, current_node.distance_to_parent, child_words)
+        for node in current_node.children:
+            self.print_tree(node)
 
-    def autocorrect(self, word, distance):
-        # takes a word and a distance, compares the word to the tree, returns all words that are within the distance
+    def autocorrect(self, word, tolerance):
         possibilities = list()
-        # check the root first
-        node = BKTreeNode(word)
-        root_distance = node.edit_distance(self.root)
-        if root_distance > distance:
-            return possibilities
-        possibilities.append((self.root.text, root_distance))
-        self.autocorrect_helper(distance, self.root, possibilities)
+        self.autocorrect_helper(tolerance, self.root, BKTreeNode(word), possibilities)
         return possibilities
 
-    def autocorrect_helper(self, distance, current_node, possibilities):
+    def autocorrect_helper(self, tolerance, current_node, compare_node, possibilities):
         if current_node is None:
             return
-        right = current_node.right_child
-        left = current_node.left_child
-        if right is not None and right.distance_to_parent <= distance:
-            possibilities.append((right.text, right.distance_to_parent))
-            self.autocorrect_helper(distance, right, possibilities)
-        if left is not None and left.distance_to_parent <= distance:
-            possibilities.append((left.text, left.distance_to_parent))
-            self.autocorrect_helper(distance, left, possibilities)
+        # generate the range
+        distance = current_node.edit_distance(compare_node)
+        # if it's a good word, add it
+        if distance <= tolerance:
+            possibilities.append((current_node.text, current_node.distance_to_parent))
+
+        # check all the children, only recurse for ones within the range
+        r = [distance - tolerance, distance + tolerance]
+        for node in current_node.children:
+            if r[0] <= node.distance_to_parent <= r[1]:
+                self.autocorrect_helper(tolerance, node, compare_node, possibilities)
 
 
 def main():
-    vocabulary = ['apple', 'banana', 'orange', 'grape', 'pie']
+    vocabulary = ['neat', 'beat', 'beet', 'greet', 'skeet', 'havana', 'banana']
     tree = BKTree(vocabulary, 1)
-    print(tree.autocorrect('havana', 2))
+    tree.print_tree(tree.root)
+    print(tree.autocorrect('banana', 2))
 
 
 if __name__ == '__main__':
