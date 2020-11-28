@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from flask import Flask, request
 import whoosh
 import csv
 import os.path
@@ -8,8 +9,60 @@ from whoosh.fields import *
 from whoosh.qparser import QueryParser, MultifieldParser, GtLtPlugin, query
 from whoosh import qparser
 import pandas as pd
+from fuzzy_search.BKTree import BKTree
+
+app = Flask(__name__,
+            template_folder='./frontend/src')
+# this is temporary need to develop a vocab of words found in movie database
+imdb_vocab = ['star', 'esta', 'start', 'village', 'mission', 'million']
 
 csv_file = '../pre-processing/imdb_movie_database.csv'
+
+# homepage route
+@app.route('/', methods=['GET', 'POST'])
+def results():
+    """ route for fetch request from frontend
+    :var searchType: One of two values: basic or advanced to specify the type of search executed - required field
+    :var keywordQuery: movie title for advanced search or query for basic search - required field
+    :var fuzzySearch: boolean of if fuzzysearch if used within basic search - optional field
+    :var actor: advanced search field - optional field
+    :var production_company: advanced search field - optional field
+    :var genre: advanced search field - optional field
+    :var runTime: integer passed as the minimum runtime of the advanced search results - optional field
+    """
+    # shouldn't these be done before getting results
+    theWhooshSearch = WhooshSearch()
+    theWhooshSearch.index()
+    fuzzyTerms = []
+    results = []
+    
+    if request.method == 'POST':
+        data = request.form
+    else:
+        data = request.args
+
+    searchType = data.get('searchType')
+    keywordQuery = data.get('keywordQuery')
+    fuzzySearch = data.get('fuzzySearch')
+
+    if searchType == 'advanced':
+        actor = data.get('actor')
+        production_company = data.get('production')
+        director = data.get('director')
+        genre = data.get('genre')
+        runTime = data.get('runtime')
+        results = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
+    else:
+        if fuzzySearch == 'True':
+            fuzzyTree = BKTree(imdb_vocab, 1)
+            keywordQuery = keywordQuery.split()
+            for word in keywordQuery:
+                fuzzyTerms += fuzzyTree.autocorrect(word, 1)
+            for term in fuzzyTerms:
+                results += theWhooshSearch.basicSearch(term[0])
+        else:
+            results = theWhooshSearch.basicSearch(keywordQuery)
+    return results
 
 class WhooshSearch(object):
     def __init__(self):
@@ -32,34 +85,19 @@ class WhooshSearch(object):
                                     result['Actors'], result['Production'], result['Director'], result['Release_date'],
                                     result['Genre'], result['Awards'], result['Critic_Score'], result['RunTime']))
                 count += 1
-            return returnables, len(results)
+            return returnables
 
-    def advancedSearch(self):
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, minRuntime):
         ''' provides filters to search across multiple fields based on user input
         '''
-        ''' Temporary section for testing without frontend '''
-        Title = str(input('Enter Title: '))
-        Actor = str(input('Enter Actor: '))
-        Production = str(input('Enter Production Company: '))
-        Director = str(input('Enter Director: '))
-        Genre = str(input('Enter Genre: '))
-        minRuntime = input('Enter minumum runtime: ')
+        title = query_entered
 
         if not minRuntime:
             minRuntime = None
         else:
             minRuntime = int(minRuntime)
-        ''' end of temp section '''
 
-        # items passed to the frontend
-        image_url = list()
-        page_url = list()
-        title = list()
-        actors = list()
-        production_company = list()
-        genres = list()
-        release_date = list()
-        runtime = list()
+        returnables = list()
 
         # reset filter before each search
         allow_q = None
@@ -68,7 +106,7 @@ class WhooshSearch(object):
         # filter is case sensitive - convert all queries to lowercase before moving forward
         with self.indexer.searcher() as search:
             qp = qparser.QueryParser('Title', self.indexer.schema)
-            user_q = qp.parse(Title)
+            user_q = qp.parse(title)
 
             if Actor and Genre and Director and Production:
                 allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
@@ -105,8 +143,11 @@ class WhooshSearch(object):
                 results = search.search(user_q, filter=allow_q)
             else:
                 results = search.search(user_q)
-            for x in results:
-                print(x)
+            for result in results:
+                returnables.append((result['id'], result['page_url'], result['image_url'], result['Title'],
+                                    result['Actors'], result['Production'], result['Director'], result['Release_date'],
+                                    result['Genre'], result['Awards'], result['Critic_Score'], result['RunTime']))
+                return returnables
 
     def index(self):
         """ Establishes the whoosh database for the documents in our csv file
@@ -159,16 +200,4 @@ if __name__ == '__main__':
     global theWhooshSearch
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
-    
-    while(1):
-        searchType = str(input('basic search(b) or advanced search(a): '))
-        if searchType == 'q':
-            break
-        elif searchType == 'a':
-            theWhooshSearch.advancedSearch()
-        else:
-            query = input('Input a Query: ')
-            results, size = theWhooshSearch.basicSearch(query)
-            print('Number of results found: ' + str(size))
-            for result in results:
-                print(result[3])
+    app.run(debug=True)

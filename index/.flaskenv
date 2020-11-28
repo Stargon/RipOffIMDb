@@ -1,0 +1,2 @@
+FLASK_APP=movie_database_whoosh.py
+FLASK_ENV=development
