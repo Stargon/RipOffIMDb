@@ -28,7 +28,6 @@ export default class TextBar extends React.Component {
   valuetext(value) {
     return `${value}°C`;
   }
-
   handleChange = (event, newValue) => {
     this.setState({ ratingMax: newValue });
   };
