@@ -7,7 +7,7 @@ def main():
         writer = csv.writer(master)
         writer.writerow(['id', 'image_url', 'page_url', 'Title', 'Actors', 'Production', 'Director', 'Release_date',
                          'Genre', 'Awards', 'Critic_Score', 'Runtime'])
-        with open('imdb_movie_database_3.csv', 'r', encoding='utf-8', newline='\n') as dumb:
+        with open('imdb_movie_database_2.csv', 'r', newline='\n') as dumb:
             reader = csv.reader(dumb)
             next(reader)
             for row in reader:
