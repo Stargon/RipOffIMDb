@@ -11,62 +11,73 @@ export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
     this.state = { actor: "", production: "", director: "", rating: [25, 75] };
-    this.cleanState = this.state 
+    this.cleanState = this.state;
     // ES6 methods need to be binding to this instance
     this.onRequestSearchEvent = this.onRequestSearchEvent.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
     this.renderOptions = this.renderOptions.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this)
-    this.handleActorChange = this.handleActorChange.bind(this)
-    this.handleProductionChange = this.handleProductionChange.bind(this)
-    this.handleDirectorChange = this.handleDirectorChange.bind(this)
-    this.handleAdvancedUpdateChanges = this.handleAdvancedUpdateChanges.bind(this)
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleActorChange = this.handleActorChange.bind(this);
+    this.handleProductionChange = this.handleProductionChange.bind(this);
+    this.handleDirectorChange = this.handleDirectorChange.bind(this);
+    this.handleAdvancedUpdateChanges = this.handleAdvancedUpdateChanges.bind(
+      this
+    );
   }
 
   // Event handler to return the query
   onRequestSearchEvent(query) {
     alert(query);
-    this.setState(this.cleanState)
+    this.setState(this.cleanState);
     this.props.query(query);
-    this.props.advanced("")
+    this.props.advanced("");
     this.setState({ query: query });
   }
-  
-  handleSliderChange = (event, newValue) => {
-    this.setState({rating: newValue})
-    this.handleAdvancedUpdateChanges()
 
+  handleSliderChange = (event, newValue) => {
+    this.setState({ rating: newValue });
+    this.handleAdvancedUpdateChanges();
   };
 
   handleKeyPress = (event) => {
-    if(event.key === "Enter"){
-      this.handleAdvancedUpdateChanges()
+    if (event.key === "Enter") {
+      this.handleAdvancedUpdateChanges();
     }
-  }
+  };
 
   handleAdvancedUpdateChanges = () => {
-      let tags = {actor: this.state.actor, production: this.state.production, director: this.state.director, rating:this.state.rating}
-      tags=JSON.stringify(tags)
-      this.props.advanced(tags)
-  }
+    let tags = {
+      actor: this.state.actor,
+      production: this.state.production,
+      director: this.state.director,
+      runtime: this.state.rating,
+    };
+    tags = JSON.stringify(tags);
+    this.props.advanced(tags);
+  };
 
   handleActorChange(event) {
-    this.setState({actor: event.target.value})
+    this.setState({ actor: event.target.value });
   }
 
   handleProductionChange(event) {
-    this.setState({production: event.target.value})
+    this.setState({ production: event.target.value });
   }
   handleDirectorChange(event) {
-    this.setState({director: event.target.value})
+    this.setState({ director: event.target.value });
   }
-
 
   // Additional render options
   renderOptions = () => {
     return (
       <div style={{ width: "100%" }}>
-        <Box display="flex" flexDirection="row" p={1} m={1} justifyContent="center">
+        <Box
+          display="flex"
+          flexDirection="row"
+          p={1}
+          m={1}
+          justifyContent="center"
+        >
           <Box p={1}>
             <TextField
               value={this.state.actor}
@@ -100,13 +111,15 @@ export default class TextBar extends React.Component {
               onKeyDown={this.handleKeyPress}
             ></TextField>
           </Box>
-          <Box p={.5}  flexGrow={1}>
+          <Box p={0.5} flexGrow={1}>
             <Typography id="range-slider" gutterBottom>
-              Rating
+              Runtime
             </Typography>
             <Slider
               value={this.state.rating}
-              onChange={(event, newValue) => this.handleSliderChange(event, newValue)}
+              onChange={(event, newValue) =>
+                this.handleSliderChange(event, newValue)
+              }
               valueLabelDisplay="auto"
               aria-labelledby="range-slider"
               getAriaValueText={this.valuetext}

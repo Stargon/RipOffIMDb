@@ -77,16 +77,15 @@ export default class SearchEngine extends React.Component {
     this.handleViewClick = this.handleViewClick.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
-    this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this)
+    this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
   }
 
   handleQueryUpdate = (update) => {
     this.setState({ query: update });
   };
   handleAdvancedUpdate = (advancedUpdated) => {
-    alert(advancedUpdated)
-    this.setState({advanced : advancedUpdated})
-  }
+    this.setState({ advanced: advancedUpdated });
+  };
 
   handleViewClick = (url) => {
     window.open(url, "_blank");
@@ -95,8 +94,6 @@ export default class SearchEngine extends React.Component {
   handleImageError = (event) => {
     event.target.src = FALLBACK_IMAGE;
   };
-
-
 
   renderSearch = (classes) => {
     return (
@@ -202,7 +199,10 @@ export default class SearchEngine extends React.Component {
       <React.Fragment>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <TextBar query={this.handleQueryUpdate} advanced={this.handleAdvancedUpdate}></TextBar>
+            <TextBar
+              query={this.handleQueryUpdate}
+              advanced={this.handleAdvancedUpdate}
+            ></TextBar>
           </Grid>
           {results}
         </Grid>
