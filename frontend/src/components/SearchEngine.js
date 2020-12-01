@@ -77,11 +77,16 @@ export default class SearchEngine extends React.Component {
     this.handleViewClick = this.handleViewClick.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
+    this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this)
   }
 
   handleQueryUpdate = (update) => {
     this.setState({ query: update });
   };
+  handleAdvancedUpdate = (advancedUpdated) => {
+    alert(advancedUpdated)
+    this.setState({advanced : advancedUpdated})
+  }
 
   handleViewClick = (url) => {
     window.open(url, "_blank");
@@ -91,57 +96,13 @@ export default class SearchEngine extends React.Component {
     event.target.src = FALLBACK_IMAGE;
   };
 
+
+
   renderSearch = (classes) => {
     return (
       <Grid item>
         <CssBaseline />
-        {/* <AppBar position="relative">
-            <Toolbar>
-              <CameraIcon className={classes.icon} />
-              <Typography variant="h6" color="inherit" noWrap>
-                Album layout
-              </Typography>
-            </Toolbar>
-          </AppBar> */}
         <main>
-          {/* Hero unit */}
-          {/* <div className={classes.heroContent}>
-              <Container maxWidth="sm">
-                <Typography
-                  component="h1"
-                  variant="h2"
-                  align="center"
-                  color="textPrimary"
-                  gutterBottom
-                >
-                  Album layout
-                </Typography>
-                <Typography
-                  variant="h5"
-                  align="center"
-                  color="textSecondary"
-                  paragraph
-                >
-                  Something short and leading about the collection below—its
-                  contents, the creator, etc. Make it short and sweet, but not
-                  too short so folks don&apos;t simply skip over it entirely.
-                </Typography>
-                <div className={classes.heroButtons}>
-                  <Grid container spacing={2} justify="center">
-                    <Grid item>
-                      <Button variant="contained" color="primary">
-                        Main call to action
-                      </Button>
-                    </Grid>
-                    <Grid item>
-                      <Button variant="outlined" color="primary">
-                        Secondary action
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </div>
-              </Container>
-            </div> */}
           <Container className={classes.cardGrid} maxWidth="md">
             {/* End hero unit */}
             <Grid container spacing={4}>
@@ -241,7 +202,7 @@ export default class SearchEngine extends React.Component {
       <React.Fragment>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <TextBar query={this.handleQueryUpdate}></TextBar>
+            <TextBar query={this.handleQueryUpdate} advanced={this.handleAdvancedUpdate}></TextBar>
           </Grid>
           {results}
         </Grid>
