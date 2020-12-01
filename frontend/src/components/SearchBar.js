@@ -27,7 +27,6 @@ export default class TextBar extends React.Component {
 
   // Event handler to return the query
   onRequestSearchEvent(query) {
-    alert(query);
     this.setState(this.cleanState);
     this.props.query(query);
     this.props.advanced("");

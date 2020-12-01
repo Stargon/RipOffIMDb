@@ -68,7 +68,7 @@ const example = [
 export default class SearchEngine extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { query: "" };
+    this.state = { query: "", results:[]};
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
@@ -79,6 +79,10 @@ export default class SearchEngine extends React.Component {
 
   handleQueryUpdate = (update) => {
     this.setState({ query: update });
+    if(update !== "" && update !== undefined){
+      const request = `${serverEndpoint}?searchType=basic?keyWordQuery=${update}`
+      alert(request)
+    }
   };
   handleAdvancedUpdate = (advancedUpdated) => {
     this.setState({ advanced: advancedUpdated });
@@ -93,6 +97,10 @@ export default class SearchEngine extends React.Component {
   };
 
   renderSearch = (classes) => {
+    // Testing
+    if(this.state.query !== "" && this.state.results.length === 0){
+      this.setState({results: example})
+    }
     return (
       <Grid item>
         <CssBaseline />
@@ -105,7 +113,7 @@ export default class SearchEngine extends React.Component {
                 // (adjust with json object later)
                 // Note that example uses labels that are capital, adjust them
                 // later based on response from Whoosh backend
-                example.map((movie) => (
+                this.state.results.map((movie) => (
                   <Grid item key={movie} xs={12} sm={6} md={4}>
                     <Card className={classes.card}>
                       <CardMedia
@@ -188,9 +196,9 @@ export default class SearchEngine extends React.Component {
     const update = this.state.query;
     const classes = makeStyles();
 
-    let results = null;
+    let searchResults = null;
     if (update !== "" && update !== undefined) {
-      results = this.renderSearch(classes);
+      searchResults = this.renderSearch(classes);
     }
     return (
       <React.Fragment>
@@ -201,7 +209,7 @@ export default class SearchEngine extends React.Component {
               advanced={this.handleAdvancedUpdate}
             ></TextBar>
           </Grid>
-          {results}
+          {searchResults}
         </Grid>
       </React.Fragment>
     );
