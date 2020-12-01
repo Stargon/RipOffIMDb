@@ -10,11 +10,13 @@ import Slider from "@material-ui/core/Slider";
 export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { ratingMin: 20, ratingMax: 37, ratingValue: 30, rating: [25, 75] };
+    this.state = { rating: [25, 75] };
     // ES6 methods need to be binding to this instance
     this.onRequestSearchEvent = this.onRequestSearchEvent.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.renderOptions = this.renderOptions.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this)
+    this.handleActorChange = this.handleActorChange.bind(this)
   }
 
   // Event handler to return the query
@@ -28,6 +30,16 @@ export default class TextBar extends React.Component {
     this.setState({rating: newValue})
   };
 
+  handleKeyPress = (event) => {
+    if(event.key === "Enter"){
+      alert(this.state.actor)
+    }
+  }
+
+  handleActorChange(event) {
+    this.setState({actor: event.target.value})
+  }
+
   // Additional render options
   renderOptions = () => {
     return (
@@ -35,9 +47,12 @@ export default class TextBar extends React.Component {
         <Box display="flex" flexDirection="row" p={1} m={1} justifyContent="center">
           <Box p={1}>
             <TextField
-              defaultValue="actor"
-              colorV="secondary"
+              label="Actor"
+              color="secondary"
               style={{ margine: "0 auto" }}
+              variant="outlined"
+              onChange={this.handleActorChange}
+              onKeyDown={this.handleKeyPress}
             ></TextField>
           </Box>
           <Box p={1}>
