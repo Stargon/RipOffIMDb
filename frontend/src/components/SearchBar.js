@@ -10,10 +10,9 @@ import Slider from "@material-ui/core/Slider";
 export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { ratingMin: 20, ratingMax: 37, ratingValue: 30 };
+    this.state = { ratingMin: 20, ratingMax: 37, ratingValue: 30, rating: [25, 75] };
     // ES6 methods need to be binding to this instance
     this.onRequestSearchEvent = this.onRequestSearchEvent.bind(this);
-    this.valuetext = this.valuetext.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.renderOptions = this.renderOptions.bind(this);
   }
@@ -24,19 +23,16 @@ export default class TextBar extends React.Component {
     this.props.query(query);
     this.setState({ query: query });
   }
-
-  valuetext(value) {
-    return `${value}°C`;
-  }
+  
   handleChange = (event, newValue) => {
-    this.setState({ ratingMax: newValue });
+    this.setState({rating: newValue})
   };
 
   // Additional render options
   renderOptions = () => {
     return (
       <div style={{ width: "100%" }}>
-        <Box display="flex" flexDirection="row" p={1} m={1}>
+        <Box display="flex" flexDirection="row" p={1} m={1} justifyContent="center">
           <Box p={1}>
             <TextField
               defaultValue="actor"
@@ -46,17 +42,31 @@ export default class TextBar extends React.Component {
           </Box>
           <Box p={1}>
             <TextField
-              defaultValue="actor"
+              defaultValue="production"
               colorV="secondary"
               style={{ margine: "0 auto" }}
             ></TextField>
           </Box>
           <Box p={1}>
+            <TextField
+              defaultValue="director"
+              colorV="secondary"
+              style={{ margine: "0 auto" }}
+            ></TextField>
+          </Box>
+          <Box p={1}>
+            <TextField
+              defaultValue="production"
+              colorV="secondary"
+              style={{ margine: "0 auto" }}
+            ></TextField>
+          </Box>
+          <Box p={.5}  flexGrow={1}>
             <Typography id="range-slider" gutterBottom>
               Rating
             </Typography>
             <Slider
-              value={this.state.rangeValue}
+              value={this.state.rating}
               onChange={(event, newValue) => this.handleChange(event, newValue)}
               valueLabelDisplay="auto"
               aria-labelledby="range-slider"
