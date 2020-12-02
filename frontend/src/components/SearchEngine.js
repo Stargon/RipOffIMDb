@@ -17,58 +17,12 @@ import FALLBACK_IMAGE from "../images/temp_fallback.png";
 
 const serverEndpoint = "http://localhost:5000/";
 
-const example = [
-  {
-    id: 185004,
-    image:
-      "https://m.media-amazon.com/images/M/MV5BMjA4ODMzNTE0OF5BMl5BanBnXkFtZTcwOTg5NDIzMQ@@._V1_SX300.jpg",
-    url: "https://www.imdb.com/title/tt0364977/",
-    title: "Bangkok Haunted",
-    actors:
-      "Pimsiree Pimsee, Pramote Seangsorn, Dawan Singha-Wee, Kalyanut Sriboonrueng",
-    production: "N/A",
-    director: "Oxide Chun Pang, Pisut Praesangeam",
-    release_date: "26-Jul-05",
-    genre: "Horror, Mystery",
-    awards: "N/A",
-    critics:
-      "[{'Source': 'Internet Movie Database', 'Value': '5.1/10'}, {'Source': 'Rotten Tomatoes', 'Value': '32%'}]",
-    runtime: "130 min",
-  },
-  {
-    id: 388886,
-    image: "N/A",
-    url: "https://www.imdb.com/title/tt3162318/",
-    title: "Star Wars: Tremors of the Force",
-    actors: "Stephen Chang, Patricia Raven, Ed Bergtold, Frank Hernandez",
-    production: "N/A",
-    director: "John Bardy",
-    release_date: "N/A",
-    genre: "Sci-Fi",
-    awards: "N/A",
-    critics: [],
-    runtime: "N/A",
-  },
-  {
-    id: 388887,
-    image: "N/A",
-    url: "https://www.imdb.com/title/tt3162324/",
-    title: "Sinifta senlik",
-    actors: "Necla Nazir, Sema Koçak, Günseli Çelenk, Nalan Akbay",
-    production: "N/A",
-    director: "Atilla Gökbürü",
-    release_date: "N/A",
-    genre: "Comedy, Romance",
-    awards: "N/A",
-    critics: "[{'Source': 'Internet Movie Database', 'Value': '4.4/10'}]",
-    runtime: "77 min",
-  },
-];
-
 export default class SearchEngine extends React.Component {
   constructor(props) {
+    // Set default props and state values
     super(props);
-    this.state = { query: "", results: [], error: null };
+    this.state = { query: "", results: [], error: null, isLoaded: true };
+    // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
@@ -77,23 +31,36 @@ export default class SearchEngine extends React.Component {
     this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
   }
 
-  handleQueryUpdate = (update) => {
+  handleQueryUpdate = async (update) => {
+    // Set default state for new query in update while loading
+    this.setState({ isLoaded: false, error: null, results: [] });
     if (update !== "" && update !== undefined && this.state.query !== update) {
+      // Updated query is different than current query, begin fetching data
+
+      // Format simple request string, and fetch results
       this.setState({ query: update });
       const request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
-      fetch(request, {mode:"no-cors"})
+      await fetch(request)
         .then((res) => res.json())
         .then(
           (response) => {
-            this.setState({ results: response.items });
+            // Response received, save results
+            this.setState({ isLoaded: true, results: response });
           },
-          (error) => {
-            this.setState({ error:error });
+          (err) => {
+            // Error in communicating to the server
+            this.setState({ error: err, isLoaded: true, results: null });
           }
         );
-      alert(request);
+    } else if (this.state.query === update) {
+      // update is not different than current query, do not clear page
+      this.setState({ isLoaded: true });
+    } else {
+      // no input given, clear page
+      this.setState({ isLoaded: true, query: "" });
     }
   };
+
   handleAdvancedUpdate = (advancedUpdated) => {
     this.setState({ advanced: advancedUpdated });
   };
@@ -107,71 +74,70 @@ export default class SearchEngine extends React.Component {
   };
 
   renderSearch = (classes) => {
-    // Testing
-    const { error } = this.state;
-    if (error) {
-      alert(error)
-      return(<Typography inline variant="body1" align="center">Error: {error.message}</Typography>) 
-    } else {
-      if (this.state.query !== "" && this.state.results.length === 0) {
-        this.setState({ results: example });
-      }
-      return (
-        <Grid item>
-          <CssBaseline />
-          <main>
-            <Container className={classes.cardGrid} maxWidth="md">
-              {/* End hero unit */}
-              <Grid container spacing={4}>
-                {
-                  // From example constant, map a card for each element
-                  // (adjust with json object later)
-                  // Note that example uses labels that are capital, adjust them
-                  // later based on response from Whoosh backend
-                  this.state.results.map((movie) => (
-                    <Grid item key={movie} xs={12} sm={6} md={4}>
-                      <Card className={classes.card}>
-                        <CardMedia
-                          className={classes.cardMedia}
-                          component="img"
-                          image={movie.image}
-                          title={movie.title}
-                          onError={this.handleImageError}
-                        />
-                        <CardContent className={classes.cardContent}>
-                          <Typography gutterBottom variant="h5" component="h2">
-                            {movie.title}
-                          </Typography>
-                          <Typography>
-                            {movie.genre.includes("N/A")
-                              ? "No genres listed"
-                              : movie.genre}
-                          </Typography>
-                          <Typography>
-                            {movie.runtime.includes("N/A")
-                              ? "Runtime unavailable"
-                              : movie.runtime}
-                          </Typography>
-                        </CardContent>
-                        <CardActions>
-                          <Button
-                            size="small"
-                            onClick={() => this.handleViewClick(movie.url)}
-                            color="primary"
-                          >
-                            View
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  ))
-                }
-              </Grid>
-            </Container>
-          </main>
-        </Grid>
-      );
+    if (!this.state.results) {
+      // Results do not exist (maybe in a middle of a promise/state change),
+      // do not render
+      return null;
+    } else if (this.state.results.length === 0 && this.state.query !== "") {
+      // No results were found for a specific query
+      return <Typography>No results were found!</Typography>;
     }
+    // Render all the items from the fetch results
+    return (
+      <Grid item>
+        <CssBaseline />
+        <main>
+          <Container className={classes.cardGrid} maxWidth="md">
+            {/* End hero unit */}
+            <Grid container spacing={4}>
+              {
+                // From example constant, map a card for each element
+                // (adjust with json object later)
+                // Note that example uses labels that are capital, adjust them
+                // later based on response from Whoosh backend
+                this.state.results.map((movie) => (
+                  <Grid item key={movie} xs={12} sm={6} md={4}>
+                    <Card className={classes.card}>
+                      <CardMedia
+                        className={classes.cardMedia}
+                        component="img"
+                        image={movie.image_url}
+                        title={movie.title}
+                        onError={this.handleImageError}
+                      />
+                      <CardContent className={classes.cardContent}>
+                        <Typography gutterBottom variant="h5" component="h2">
+                          {movie.title}
+                        </Typography>
+                        <Typography>
+                          {movie.genre.includes("N/A")
+                            ? "No genres listed"
+                            : movie.genre}
+                        </Typography>
+                        <Typography>
+                          {movie.runtime.includes("N/A")
+                            ? "Runtime unavailable"
+                            : movie.runtime}
+                        </Typography>
+                      </CardContent>
+                      <CardActions>
+                        <Button
+                          size="small"
+                          onClick={() => this.handleViewClick(movie.page_url)}
+                          color="primary"
+                        >
+                          View
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))
+              }
+            </Grid>
+          </Container>
+        </main>
+      </Grid>
+    );
   };
 
   makeStyles(theme) {
@@ -211,11 +177,24 @@ export default class SearchEngine extends React.Component {
   render() {
     const update = this.state.query;
     const classes = makeStyles();
-
+    const { error, isLoaded, results } = this.state;
     let searchResults = null;
-    if (update !== "" && update !== undefined) {
+
+    if (error) {
+      // Error in communicating with the server, render the error message
+      searchResults = (
+        <Typography inline variant="body1" align="center">
+          Error: {error.message}
+        </Typography>
+      );
+    } else if (!isLoaded) {
+      // Let user know the webpage is loading
+      searchResults = <div>Loading...</div>;
+    } else if ((update !== "" && update !== undefined) || results.length >= 0) {
+      // Conditionally render the results
       searchResults = this.renderSearch(classes);
     }
+    // Render the app
     return (
       <React.Fragment>
         <Grid container spacing={3}>
