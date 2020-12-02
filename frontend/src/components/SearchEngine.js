@@ -15,7 +15,7 @@ import Container from "@material-ui/core/Container";
 // Figure out fallback image later
 import FALLBACK_IMAGE from "../images/temp_fallback.png";
 
-const serverEndpoint = "http://localhost:5000/"
+const serverEndpoint = "http://localhost:5000/";
 
 const example = [
   {
@@ -68,7 +68,7 @@ const example = [
 export default class SearchEngine extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { query: "", results:[]};
+    this.state = { query: "", results: [], error: null };
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
@@ -79,9 +79,19 @@ export default class SearchEngine extends React.Component {
 
   handleQueryUpdate = (update) => {
     this.setState({ query: update });
-    if(update !== "" && update !== undefined){
-      const request = `${serverEndpoint}?searchType=basic?keyWordQuery=${update}`
-      alert(request)
+    if (update !== "" && update !== undefined) {
+      const request = `${serverEndpoint}?searchType=basic?keyWordQuery=${update}`;
+      fetch(request)
+        .then((res) => res.json())
+        .then(
+          (response) => {
+            this.setState({ results: response.items });
+          },
+          (error) => {
+            this.setState({ error });
+          }
+        );
+      alert(request);
     }
   };
   handleAdvancedUpdate = (advancedUpdated) => {
@@ -98,64 +108,69 @@ export default class SearchEngine extends React.Component {
 
   renderSearch = (classes) => {
     // Testing
-    if(this.state.query !== "" && this.state.results.length === 0){
-      this.setState({results: example})
+    const { error } = this.state;
+    if (error) {
+      return(<Typography inline variant="body1" align="center">Error: {error.message}</Typography>) 
+    } else {
+      if (this.state.query !== "" && this.state.results.length === 0) {
+        this.setState({ results: example });
+      }
+      return (
+        <Grid item>
+          <CssBaseline />
+          <main>
+            <Container className={classes.cardGrid} maxWidth="md">
+              {/* End hero unit */}
+              <Grid container spacing={4}>
+                {
+                  // From example constant, map a card for each element
+                  // (adjust with json object later)
+                  // Note that example uses labels that are capital, adjust them
+                  // later based on response from Whoosh backend
+                  this.state.results.map((movie) => (
+                    <Grid item key={movie} xs={12} sm={6} md={4}>
+                      <Card className={classes.card}>
+                        <CardMedia
+                          className={classes.cardMedia}
+                          component="img"
+                          image={movie.image}
+                          title={movie.title}
+                          onError={this.handleImageError}
+                        />
+                        <CardContent className={classes.cardContent}>
+                          <Typography gutterBottom variant="h5" component="h2">
+                            {movie.title}
+                          </Typography>
+                          <Typography>
+                            {movie.genre.includes("N/A")
+                              ? "No genres listed"
+                              : movie.genre}
+                          </Typography>
+                          <Typography>
+                            {movie.runtime.includes("N/A")
+                              ? "Runtime unavailable"
+                              : movie.runtime}
+                          </Typography>
+                        </CardContent>
+                        <CardActions>
+                          <Button
+                            size="small"
+                            onClick={() => this.handleViewClick(movie.url)}
+                            color="primary"
+                          >
+                            View
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                }
+              </Grid>
+            </Container>
+          </main>
+        </Grid>
+      );
     }
-    return (
-      <Grid item>
-        <CssBaseline />
-        <main>
-          <Container className={classes.cardGrid} maxWidth="md">
-            {/* End hero unit */}
-            <Grid container spacing={4}>
-              {
-                // From example constant, map a card for each element
-                // (adjust with json object later)
-                // Note that example uses labels that are capital, adjust them
-                // later based on response from Whoosh backend
-                this.state.results.map((movie) => (
-                  <Grid item key={movie} xs={12} sm={6} md={4}>
-                    <Card className={classes.card}>
-                      <CardMedia
-                        className={classes.cardMedia}
-                        component="img"
-                        image={movie.image}
-                        title={movie.title}
-                        onError={this.handleImageError}
-                      />
-                      <CardContent className={classes.cardContent}>
-                        <Typography gutterBottom variant="h5" component="h2">
-                          {movie.title}
-                        </Typography>
-                        <Typography>
-                          {movie.genre.includes("N/A")
-                            ? "No genres listed"
-                            : movie.genre}
-                        </Typography>
-                        <Typography>
-                          {movie.runtime.includes("N/A")
-                            ? "Runtime unavailable"
-                            : movie.runtime}
-                        </Typography>
-                      </CardContent>
-                      <CardActions>
-                        <Button
-                          size="small"
-                          onClick={() => this.handleViewClick(movie.url)}
-                          color="primary"
-                        >
-                          View
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                ))
-              }
-            </Grid>
-          </Container>
-        </main>
-      </Grid>
-    );
   };
 
   makeStyles(theme) {
