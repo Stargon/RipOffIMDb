@@ -6,6 +6,8 @@ import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
+import Button from "@material-ui/core/Fab";
+import FindReplaceIcon from "@material-ui/icons/FindReplace";
 
 const genresList = [
   "",
@@ -37,16 +39,7 @@ const genresList = [
   "Game-Show",
   "Talk-Show",
 ];
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
+
 export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
@@ -146,19 +139,19 @@ export default class TextBar extends React.Component {
             ></TextField>
           </Box>
           <Box p={1} flexGrow={1}>
-              <TextField
-                value={this.state.director}
-                label="Director"
-                color="secondary"
-                style={{ width: "0 auto" }}
-                variant="outlined"
-                onChange={this.handleDirectorChange}
-                fullWidth={true}
-              ></TextField>
+            <TextField
+              value={this.state.director}
+              label="Director"
+              color="secondary"
+              style={{ width: "0 auto" }}
+              variant="outlined"
+              onChange={this.handleDirectorChange}
+              fullWidth={true}
+            ></TextField>
           </Box>
-          <Box p={1} flexGrow={.25}>
-          <TextField
-                label="Genre"
+          <Box p={1} flexGrow={0.25}>
+            <TextField
+              label="Genre"
               value={this.state.genre}
               onChange={this.handleGenreChange}
               select
@@ -190,6 +183,12 @@ export default class TextBar extends React.Component {
               getAriaValueText={this.valuetext}
               color="secondary"
             />
+          </Box>
+          <Box p={1} m={1} pl={2} flexShrink={0}>
+            <Button variant="contained" size="small" color="secondary">
+              <FindReplaceIcon size="small" />
+              Advanced Search
+            </Button>
           </Box>
         </Box>
       </div>
