@@ -7,6 +7,46 @@ import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
 
+const genresList = [
+  "",
+  "Drama",
+  "Biography",
+  "Crime",
+  "History",
+  "Thriller",
+  "Comedy",
+  "Action",
+  "Adventure",
+  "Sci-Fi",
+  "Horror",
+  "Mystery",
+  "Romance",
+  "Documentary",
+  "Family",
+  "Adult",
+  "War",
+  "Short",
+  "Western",
+  "Sport",
+  "Animation",
+  "Fantasy",
+  "Musical",
+  "Music",
+  "Reality-TV",
+  "News",
+  "Game-Show",
+  "Talk-Show",
+];
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
@@ -23,6 +63,7 @@ export default class TextBar extends React.Component {
     this.handleAdvancedUpdateChanges = this.handleAdvancedUpdateChanges.bind(
       this
     );
+    this.handleGenreChange = this.handleGenreChange.bind(this);
   }
 
   // Event handler to return the query
@@ -38,6 +79,7 @@ export default class TextBar extends React.Component {
     this.handleAdvancedUpdateChanges();
   };
 
+  // Deprecated, kept just in case
   handleKeyPress = (event) => {
     if (event.key === "Enter") {
       this.handleAdvancedUpdateChanges();
@@ -62,8 +104,13 @@ export default class TextBar extends React.Component {
   handleProductionChange(event) {
     this.setState({ production: event.target.value });
   }
+
   handleDirectorChange(event) {
     this.setState({ director: event.target.value });
+  }
+
+  handleGenreChange(event) {
+    this.setState({ genre: event.target.value });
   }
 
   // Additional render options
@@ -77,40 +124,58 @@ export default class TextBar extends React.Component {
           m={1}
           justifyContent="center"
         >
-          <Box p={1}>
+          <Box p={1} flexGrow={1}>
             <TextField
               value={this.state.actor}
               label="Actor"
               color="secondary"
-              style={{ margine: "0 auto" }}
               variant="outlined"
               onChange={this.handleActorChange}
-              onKeyDown={this.handleKeyPress}
+              fullWidth={true}
             ></TextField>
           </Box>
-          <Box p={1}>
+          <Box p={1} flexGrow={1}>
             <TextField
               value={this.state.production}
               label="Production"
               color="secondary"
-              style={{ margine: "0 auto" }}
+              style={{ width: "0 auto" }}
               variant="outlined"
               onChange={this.handleProductionChange}
-              onKeyDown={this.handleKeyPress}
+              fullWidth={true}
             ></TextField>
           </Box>
-          <Box p={1}>
-            <TextField
-              value={this.state.director}
-              label="Director"
-              color="secondary"
-              style={{ margine: "0 auto" }}
+          <Box p={1} flexGrow={1}>
+              <TextField
+                value={this.state.director}
+                label="Director"
+                color="secondary"
+                style={{ width: "0 auto" }}
+                variant="outlined"
+                onChange={this.handleDirectorChange}
+                fullWidth={true}
+              ></TextField>
+          </Box>
+          <Box p={1} flexGrow={.25}>
+          <TextField
+                label="Genre"
+              value={this.state.genre}
+              onChange={this.handleGenreChange}
+              select
+              SelectProps={{
+                native: true,
+              }}
               variant="outlined"
-              onChange={this.handleDirectorChange}
-              onKeyDown={this.handleKeyPress}
-            ></TextField>
+              fullWidth={true}
+            >
+              {genresList.map((genre) => (
+                <option value={genre} key={genre}>
+                  {genre}
+                </option>
+              ))}
+            </TextField>
           </Box>
-          <Box p={0.5} flexGrow={1}>
+          <Box flexGrow={1}>
             <Typography id="range-slider" gutterBottom>
               Runtime
             </Typography>
@@ -119,6 +184,7 @@ export default class TextBar extends React.Component {
               onChange={(event, newValue) =>
                 this.handleSliderChange(event, newValue)
               }
+              style={{ width: "0 auto" }}
               valueLabelDisplay="auto"
               aria-labelledby="range-slider"
               getAriaValueText={this.valuetext}
