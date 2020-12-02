@@ -78,17 +78,17 @@ export default class SearchEngine extends React.Component {
   }
 
   handleQueryUpdate = (update) => {
-    this.setState({ query: update });
-    if (update !== "" && update !== undefined) {
-      const request = `${serverEndpoint}?searchType=basic?keyWordQuery=${update}`;
-      fetch(request)
+    if (update !== "" && update !== undefined && this.state.query !== update) {
+      this.setState({ query: update });
+      const request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
+      fetch(request, {mode:"no-cors"})
         .then((res) => res.json())
         .then(
           (response) => {
             this.setState({ results: response.items });
           },
           (error) => {
-            this.setState({ error });
+            this.setState({ error:error });
           }
         );
       alert(request);
@@ -110,6 +110,7 @@ export default class SearchEngine extends React.Component {
     // Testing
     const { error } = this.state;
     if (error) {
+      alert(error)
       return(<Typography inline variant="body1" align="center">Error: {error.message}</Typography>) 
     } else {
       if (this.state.query !== "" && this.state.results.length === 0) {
