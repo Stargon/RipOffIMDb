@@ -80,11 +80,15 @@ export default class SearchEngine extends React.Component {
       return null;
     } else if (this.state.results.length === 0 && this.state.query !== "") {
       // No results were found for a specific query
-      return <Typography>No results were found!</Typography>;
+      return (
+        <Grid item xs={12}>
+          <Typography>No results were found!</Typography>
+        </Grid>
+      );
     }
     // Render all the items from the fetch results
     return (
-      <Grid item>
+      <Grid item xs={12}>
         <CssBaseline />
         <main>
           <Container className={classes.cardGrid} maxWidth="md">
@@ -183,13 +187,19 @@ export default class SearchEngine extends React.Component {
     if (error) {
       // Error in communicating with the server, render the error message
       searchResults = (
-        <Typography inline variant="body1" align="center">
-          Error: {error.message}
-        </Typography>
+        <Grid item  xs={12}>
+          <Typography inline variant="body1" align="center">
+            Error: {error.message}
+          </Typography>
+        </Grid>
       );
     } else if (!isLoaded) {
       // Let user know the webpage is loading
-      searchResults = <div>Loading...</div>;
+      searchResults = (
+        <Grid item xs={12}>
+          <div>Loading...</div>
+        </Grid>
+      );
     } else if ((update !== "" && update !== undefined) || results.length >= 0) {
       // Conditionally render the results
       searchResults = this.renderSearch(classes);
