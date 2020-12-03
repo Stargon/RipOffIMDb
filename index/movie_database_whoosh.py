@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import whoosh
 import csv
 import os.path
@@ -13,10 +13,10 @@ from fuzzy_search.BKTree import BKTree
 
 app = Flask(__name__,
             template_folder='./frontend/src')
-# this is temporary need to develop a vocab of words found in movie database
-imdb_vocab = ['star', 'esta', 'start', 'village', 'mission', 'million']
 
-csv_file = '../pre-processing/imdb_movie_database.csv'
+imdb_vocab = []
+
+csv_file = 'database/database_master.csv'
 
 # homepage route
 @app.route('/', methods=['GET', 'POST'])
@@ -30,9 +30,11 @@ def results():
     :var genre: advanced search field - optional field
     :var runTime: integer passed as the minimum runtime of the advanced search results - optional field
     """
-    # shouldn't these be done before getting results
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
+
+    if not imdb_vocab:
+        createDict(imdb_vocab)
     fuzzyTerms = []
     results = []
     
@@ -62,33 +64,37 @@ def results():
                 results += theWhooshSearch.basicSearch(term[0])
         else:
             results = theWhooshSearch.basicSearch(keywordQuery)
-    return results
+
+    return jsonify(results)
+    
+def createDict(vocabArr):
+    with open('database/vocabulary.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for line in reader:
+            vocabArr.append(line[0])
+    return vocabArr
 
 class WhooshSearch(object):
     def __init__(self):
         super(WhooshSearch, self).__init__()
-        self.page_size = 10
 
     def basicSearch(self, query_entered):
-        returnables = list()
+        returnables = []
         with self.indexer.searcher() as search:
             query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
             query = query.parse(query_entered)
             results = search.search(query, limit=None, terms=True)
 
             # return the stored attributes
-            count = 0
             for result in results:
-                if count == self.page_size:
-                    break
-                returnables.append((result['id'], result['page_url'], result['image_url'], result['Title'],
-                                    result['Actors'], result['Production'], result['Director'], result['Release_date'],
-                                    result['Genre'], result['Awards'], result['Critic_Score'], result['RunTime']))
-                count += 1
+                returnables.append({'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'], 'title': result['Title'],
+                                    'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'], 'release_date': result['Release_date'],
+                                    'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'], 'runtime': result['RunTime']})
             return returnables
 
     def advancedSearch(self, query_entered, Actor, Production, Director, Genre, minRuntime):
         ''' provides filters to search across multiple fields based on user input
+        	query_entered/title is a required field, all other fields are optional
         '''
         title = query_entered
 
@@ -97,13 +103,11 @@ class WhooshSearch(object):
         else:
             minRuntime = int(minRuntime)
 
-        returnables = list()
+        returnables = []
 
         # reset filter before each search
         allow_q = None
 
-        # currently title is a required field - we potentially do not want this
-        # filter is case sensitive - convert all queries to lowercase before moving forward
         with self.indexer.searcher() as search:
             qp = qparser.QueryParser('Title', self.indexer.schema)
             user_q = qp.parse(title)
@@ -144,10 +148,10 @@ class WhooshSearch(object):
             else:
                 results = search.search(user_q)
             for result in results:
-                returnables.append((result['id'], result['page_url'], result['image_url'], result['Title'],
-                                    result['Actors'], result['Production'], result['Director'], result['Release_date'],
-                                    result['Genre'], result['Awards'], result['Critic_Score'], result['RunTime']))
-                return returnables
+                returnables.append({'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'], 'title': result['Title'],
+                                    'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'], 'release_date': result['Release_date'],
+                                    'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'], 'runtime': result['RunTime']})
+            return returnables
 
     def index(self):
         """ Establishes the whoosh database for the documents in our csv file
@@ -175,7 +179,7 @@ class WhooshSearch(object):
             indexer = create_in('indexdir', schema)
             writer = indexer.writer()
 
-            df = pd.read_csv(csv_file)
+            df = pd.read_csv(csv_file, encoding='iso-8859-1')
 
             for i in range(len(df)):
                 writer.add_document(id=str(df.loc[i, 'id']),
