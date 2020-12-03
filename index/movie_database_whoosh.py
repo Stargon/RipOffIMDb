@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import whoosh
 import csv
 import os.path
@@ -13,6 +14,9 @@ from fuzzy_search.BKTree import BKTree
 
 app = Flask(__name__,
             template_folder='./frontend/src')
+CORS(app)
+# this is temporary need to develop a vocab of words found in movie database
+imdb_vocab = ['star', 'esta', 'start', 'village', 'mission', 'million']
 
 imdb_vocab = []
 
