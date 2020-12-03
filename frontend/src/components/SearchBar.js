@@ -48,7 +48,7 @@ export default class TextBar extends React.Component {
       production: "",
       director: "",
       genre: "",
-      rating: [25, 75],
+      runtime: [25, 75],
     };
     this.cleanState = this.state;
     // ES6 methods need to be binding to this instance
@@ -86,11 +86,12 @@ export default class TextBar extends React.Component {
 
   handleAdvancedUpdateChanges = () => {
     let tags = {
+      query: this.state.query,
       actor: this.state.actor,
       production: this.state.production,
       director: this.state.director,
       genre: this.state.genre,
-      runtime: this.state.rating,
+      runtime: this.state.runtime,
     };
     this.props.advanced(tags);
     this.setState({advanced: tags})
@@ -179,7 +180,7 @@ export default class TextBar extends React.Component {
               Runtime
             </Typography>
             <Slider
-              value={this.state.rating}
+              value={this.state.runtime}
               onChange={(event, newValue) =>
                 this.handleSliderChange(event, newValue)
               }
