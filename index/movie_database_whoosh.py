@@ -7,7 +7,8 @@ import csv
 import os.path
 from whoosh.index import create_in, open_dir, exists_in, Index
 from whoosh.fields import *
-from whoosh.qparser import QueryParser, MultifieldParser, GtLtPlugin, query
+from whoosh.qparser import QueryParser, MultifieldParser, query
+from whoosh.query import NumericRange
 from whoosh import qparser
 import pandas as pd
 from fuzzy_search.BKTree import BKTree
@@ -15,8 +16,6 @@ from fuzzy_search.BKTree import BKTree
 app = Flask(__name__,
             template_folder='./frontend/src')
 CORS(app)
-# this is temporary need to develop a vocab of words found in movie database
-imdb_vocab = ['star', 'esta', 'start', 'village', 'mission', 'million']
 
 fuzzy_tree = None
 
@@ -100,27 +99,30 @@ class WhooshSearch(object):
             # return the stored attributes
             for result in results:
                 returnables.append(
-                    {'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'],
+                    {'id': result['id'],
+                     'page_url': result['page_url'],
+                     'image_url': result['image_url'],
                      'title': result['Title'],
-                     'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'],
+                     'actors': result['Actors'],
+                     'production': result['Production'],
+                     'director': result['Director'],
                      'release_date': result['Release_date'],
-                     'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'],
+                     'genre': result['Genre'],
+                     'awards': result['Awards'],
+                     'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
             return returnables
 
-    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, minRuntime):
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime):
         ''' provides filters to search across multiple fields based on user input
-        	query_entered/title is a required field, all other fields are optional
+            query_entered/title is a required field, all other fields are optional
         '''
         title = query_entered
 
-        if not minRuntime:
-            minRuntime = None
-        else:
-            minRuntime = int(minRuntime)
-
         returnables = []
-
+        
+        if runtime:
+            runtime = runtime.split('-')
         # reset filter before each search
         allow_q = None
 
@@ -128,21 +130,38 @@ class WhooshSearch(object):
             qp = qparser.QueryParser('Title', self.indexer.schema)
             user_q = qp.parse(title)
 
-            if Actor and Genre and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director',
-                                                                                                   Director) and query.Term(
-                    'Production', Production)
+            if Actor and Genre and Director and Production and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Actor and Genre and Director and Production:
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
+            elif Actor and Genre and Director and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Actor and Genre and Production and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Actor and Director and Production and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Genre and Director and Production and runtime:
+                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
             elif Actor and Genre and Director:
                 allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director)
             elif Actor and Genre and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production',
-                                                                                                   Production)
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production)
             elif Actor and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production',
-                                                                                                         Production)
+                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production)
             elif Genre and Director and Production:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production',
-                                                                                                         Production)
+                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
+            elif Actor and Genre and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Actor and Director and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Actor and Production and runtime:
+                allow_q = query.Term('Actor', Actor) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Director and Production and runtime:
+                allow_q = query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Genre and Director and runtime:
+                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director)and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Genre and Production and runtime:
+                allow_q = query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
             elif Actor and Genre:
                 allow_q = query.Term('Genre', Genre) and query.Term('Actors', Actor)
             elif Actor and Director:
@@ -155,6 +174,14 @@ class WhooshSearch(object):
                 allow_q = query.Term('Production', Production) and query.Term('Genre', Genre)
             elif Production and Director:
                 allow_q = query.Term('Director', Director) and query.Term('Production', Production)
+            elif Actor and runtime:
+                allow_q = query.Term('Actors', Actor) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Director and runtime:
+                allow_q = query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Genre and runtime:
+                allow_q = query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
+            elif Production and runtime:
+                allow_q = query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
             elif Actor:
                 allow_q = query.Term('Actors', Actor)
             elif Director:
@@ -163,6 +190,8 @@ class WhooshSearch(object):
                 allow_q = query.Term('Genre', Genre)
             elif Production:
                 allow_q = query.Term('Production', Production)
+            elif runtime:
+                allow_q = query.NumericRange('RunTime', runtime[0], runtime[1])
 
             if allow_q:
                 results = search.search(user_q, filter=allow_q)
@@ -170,11 +199,17 @@ class WhooshSearch(object):
                 results = search.search(user_q)
             for result in results:
                 returnables.append(
-                    {'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'],
+                    {'id': result['id'],
+                     'page_url': result['page_url'],
+                     'image_url': result['image_url'],
                      'title': result['Title'],
-                     'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'],
+                     'actors': result['Actors'],
+                     'production': result['Production'],
+                     'director': result['Director'],
                      'release_date': result['Release_date'],
-                     'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'],
+                     'genre': result['Genre'],
+                     'awards': result['Awards'],
+                     'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
             return returnables
 
@@ -195,7 +230,7 @@ class WhooshSearch(object):
                         Genre=TEXT(stored=True),
                         Awards=TEXT(stored=True),
                         Critic_Score=TEXT(stored=True),
-                        RunTime=TEXT(stored=True))
+                        RunTime=NUMERIC(stored=True))
 
         if not os.path.exists('indexdir'):
             os.mkdir('indexdir')
@@ -207,6 +242,11 @@ class WhooshSearch(object):
             df = pd.read_csv(csv_file, encoding='iso-8859-1')
 
             for i in range(len(df)):
+
+                runtime = 0
+                if not pd.isnull(df.loc[i, 'Runtime']):
+                    runtime = df.loc[i, 'Runtime']
+
                 writer.add_document(id=str(df.loc[i, 'id']),
                                     image_url=str(df.loc[i, 'image_url']),
                                     page_url=str(df.loc[i, 'page_url']),
@@ -218,7 +258,7 @@ class WhooshSearch(object):
                                     Genre=str(df.loc[i, 'Genre']),
                                     Awards=str(df.loc[i, 'Awards']),
                                     Critic_Score=str(df.loc[i, 'Critic_Score']),
-                                    RunTime=str(df.loc[i, 'Runtime']))
+                                    RunTime=int(runtime))
             writer.commit()
             self.indexer = indexer
 
