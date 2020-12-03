@@ -153,12 +153,12 @@ export default class SearchEngine extends React.Component {
                           {movie.title}
                         </Typography>
                         <Typography>
-                          {movie.genre.includes("N/A")
+                          {movie.genre.includes("nan")
                             ? "No genres listed"
                             : movie.genre}
                         </Typography>
                         <Typography>
-                          {movie.runtime.includes("N/A")
+                          {movie.runtime.includes("nan")
                             ? "Runtime unavailable"
                             : movie.runtime}
                         </Typography>
