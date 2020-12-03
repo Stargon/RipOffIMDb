@@ -43,7 +43,13 @@ const genresList = [
 export default class TextBar extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { actor: "", production: "", director: "", rating: [25, 75] };
+    this.state = {
+      actor: "",
+      production: "",
+      director: "",
+      genre: "",
+      rating: [25, 75],
+    };
     this.cleanState = this.state;
     // ES6 methods need to be binding to this instance
     this.onRequestSearchEvent = this.onRequestSearchEvent.bind(this);
@@ -69,7 +75,6 @@ export default class TextBar extends React.Component {
 
   handleSliderChange = (event, newValue) => {
     this.setState({ rating: newValue });
-    this.handleAdvancedUpdateChanges();
   };
 
   // Deprecated, kept just in case
@@ -84,10 +89,11 @@ export default class TextBar extends React.Component {
       actor: this.state.actor,
       production: this.state.production,
       director: this.state.director,
+      genre: this.state.genre,
       runtime: this.state.rating,
     };
-    tags = JSON.stringify(tags);
     this.props.advanced(tags);
+    this.setState({advanced: tags})
   };
 
   handleActorChange(event) {
@@ -185,7 +191,12 @@ export default class TextBar extends React.Component {
             />
           </Box>
           <Box p={1} m={1} pl={2} flexShrink={0}>
-            <Button variant="contained" size="small" color="secondary">
+            <Button
+              variant="contained"
+              size="small"
+              color="secondary"
+              onClick={this.handleAdvancedUpdateChanges}
+            >
               <FindReplaceIcon size="small" />
               Advanced Search
             </Button>
