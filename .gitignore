@@ -131,3 +131,6 @@ dmypy.json
 
 # Ignore config files
 pre-processing/config.txt
+
+# Ignore indexes built by whoosh
+indexdir/
