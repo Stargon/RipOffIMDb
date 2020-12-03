@@ -13,10 +13,10 @@ from fuzzy_search.BKTree import BKTree
 
 app = Flask(__name__,
             template_folder='./frontend/src')
-# this is temporary need to develop a vocab of words found in movie database
-imdb_vocab = ['star', 'esta', 'start', 'village', 'mission', 'million']
 
-csv_file = '../pre-processing/imdb_movie_database.csv'
+imdb_vocab = []
+
+csv_file = 'database/database_master.csv'
 
 # homepage route
 @app.route('/', methods=['GET', 'POST'])
@@ -30,11 +30,13 @@ def results():
     :var genre: advanced search field - optional field
     :var runTime: integer passed as the minimum runtime of the advanced search results - optional field
     """
-    # shouldn't these be done before getting results
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
+
+    if not imdb_vocab:
+        createDict(imdb_vocab)
     fuzzyTerms = []
-    results = {}
+    results = []
     
     if request.method == 'POST':
         data = request.form
@@ -62,7 +64,15 @@ def results():
                 results += theWhooshSearch.basicSearch(term[0])
         else:
             results = theWhooshSearch.basicSearch(keywordQuery)
+
     return jsonify(results)
+    
+def createDict(vocabArr):
+    with open('database/vocabulary.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for line in reader:
+            vocabArr.append(line[0])
+    return vocabArr
 
 class WhooshSearch(object):
     def __init__(self):
@@ -84,6 +94,7 @@ class WhooshSearch(object):
 
     def advancedSearch(self, query_entered, Actor, Production, Director, Genre, minRuntime):
         ''' provides filters to search across multiple fields based on user input
+        	query_entered/title is a required field, all other fields are optional
         '''
         title = query_entered
 
@@ -97,8 +108,6 @@ class WhooshSearch(object):
         # reset filter before each search
         allow_q = None
 
-        # currently title is a required field - we potentially do not want this
-        # filter is case sensitive - convert all queries to lowercase before moving forward
         with self.indexer.searcher() as search:
             qp = qparser.QueryParser('Title', self.indexer.schema)
             user_q = qp.parse(title)
