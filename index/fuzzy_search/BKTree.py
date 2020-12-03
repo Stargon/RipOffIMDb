@@ -1,6 +1,4 @@
 from BKTree_Node import BKTreeNode
-import csv
-import time
 
 
 class BKTree(object):
@@ -19,13 +17,7 @@ class BKTree(object):
                 self.add_word(tree.root.text, tree=tree)
         else:
             self.root = BKTreeNode(vocabulary[root_index])
-            startTime = time.time()
-            prevTime = time.time()
             for word in vocabulary:
-                newTime = time.time()
-                if newTime - prevTime > 5:
-                    prevTime = newTime
-                    print(word, newTime - startTime)
                 # don't add the root twice!
                 if word == vocabulary[root_index]:
                     continue
