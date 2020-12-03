@@ -74,7 +74,7 @@ export default class TextBar extends React.Component {
   }
 
   handleSliderChange = (event, newValue) => {
-    this.setState({ rating: newValue });
+    this.setState({ runtime: newValue });
   };
 
   // Deprecated, kept just in case
@@ -94,7 +94,7 @@ export default class TextBar extends React.Component {
       runtime: this.state.runtime,
     };
     this.props.advanced(tags);
-    this.setState({advanced: tags})
+    this.setState({ advanced: tags });
   };
 
   handleActorChange(event) {
