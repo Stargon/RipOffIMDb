@@ -35,14 +35,15 @@ def results():
     :var genre: advanced search field - optional field
     :var runTime: integer passed as the minimum runtime of the advanced search results - optional field
     """
+
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
     global fuzzy_tree
 
     if not fuzzy_tree:
         fuzzy_tree = createBKTree()
-    fuzzyTerms = []
-    results = []
+    fuzzy_terms = []
+    r = []
 
     if request.method == 'POST':
         data = request.form
@@ -53,24 +54,26 @@ def results():
     keywordQuery = data.get('keywordQuery')
     fuzzySearch = data.get('fuzzySearch')
 
-    if searchType == 'advanced':
-        actor = data.get('actor')
-        production_company = data.get('production')
-        director = data.get('director')
-        genre = data.get('genre')
-        runTime = data.get('runtime')
-        results = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
-    else:
-        if fuzzySearch == 'True':
-            keywordQuery = keywordQuery.split()
-            for word in keywordQuery:
-                fuzzyTerms += fuzzy_tree.autocorrect(word, 1)
-            for term in fuzzyTerms:
-                results += theWhooshSearch.basicSearch(term[0])
+    if keywordQuery:
+        if searchType == 'advanced':
+            actor = data.get('actor')
+            production_company = data.get('production')
+            director = data.get('director')
+            genre = data.get('genre')
+            runTime = data.get('runtime')
+            r = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
         else:
-            results = theWhooshSearch.basicSearch(keywordQuery)
+            if fuzzySearch == 'True':
+                keywordQuery = keywordQuery.split()
 
-    return jsonify(results)
+                for word in keywordQuery:
+                    fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
+                for term in fuzzy_terms:
+                    r += theWhooshSearch.basicSearch(term[0])
+            else:
+                r = theWhooshSearch.basicSearch(keywordQuery)
+
+    return jsonify(r)
 
 
 def createBKTree():

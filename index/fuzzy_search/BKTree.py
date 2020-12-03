@@ -1,4 +1,4 @@
-from BKTree_Node import BKTreeNode
+from .BKTree_Node import BKTreeNode
 
 
 class BKTree(object):
