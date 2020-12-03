@@ -179,7 +179,7 @@ class WhooshSearch(object):
             indexer = create_in('indexdir', schema)
             writer = indexer.writer()
 
-            df = pd.read_csv(csv_file)
+            df = pd.read_csv(csv_file, encoding='iso-8859-1')
 
             for i in range(len(df)):
                 writer.add_document(id=str(df.loc[i, 'id']),
