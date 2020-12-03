@@ -21,7 +21,13 @@ export default class SearchEngine extends React.Component {
   constructor(props) {
     // Set default props and state values
     super(props);
-    this.state = { query: "", advanced: "", results: [], error: null, isLoaded: true };
+    this.state = {
+      query: "",
+      advanced: "",
+      results: [],
+      error: null,
+      isLoaded: true,
+    };
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
@@ -29,7 +35,7 @@ export default class SearchEngine extends React.Component {
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
     this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
-    this.isAdvancedUpdate = this.isAdvancedUpdate.bind(this)
+    this.isAdvancedUpdate = this.isAdvancedUpdate.bind(this);
   }
 
   handleQueryUpdate = async (update) => {
@@ -63,20 +69,42 @@ export default class SearchEngine extends React.Component {
   };
 
   handleAdvancedUpdate = async (update) => {
-    this.setState({isLoaded: false, error: null});
-    if(update !== "" && update !== undefined && !this.isAdvancedUpdate(update)){
-      this.setState({advanced: update})
-      alert(JSON.stringify(update))
-    } else if(this.isAdvancedUpdate(update)){
-      this.setState({isLoaded: true})
+    this.setState({ isLoaded: false, error: null });
+    console.log(JSON.stringify(update));
+    if (
+      update !== "" &&
+      update !== undefined &&
+      !this.isAdvancedUpdate(update)
+    ) {
+      this.setState({ advanced: update });
+      let { query, actor, production, director, genre, runtime } = update;
+      // const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${update}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&rating=${runtime[0]}-${runtime[1]}`;
+      // Runtime is currently broken
+      const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}`;
+      alert(request);
+      this.setState({ isLoaded: true });
+      await fetch(request)
+        .then((res) => res.json())
+        .then(
+          (response) => {
+            // Response received, save results
+            this.setState({ isLoaded: true, results: response });
+          },
+          (err) => {
+            // Error in communicating to the server
+            this.setState({ error: err, isLoaded: true, results: null });
+          }
+        );
+    } else if (this.isAdvancedUpdate(update)) {
+      this.setState({ isLoaded: true });
     } else {
-      this.setState({isLoaded: true, advanced: ""});
+      this.setState({ isLoaded: true, advanced: "" });
     }
   };
 
   isAdvancedUpdate = (tags) => {
-    return JSON.stringify(tags) === JSON.stringify(this.state.advanced)
-  }
+    return JSON.stringify(tags) === JSON.stringify(this.state.advanced);
+  };
 
   handleViewClick = (url) => {
     window.open(url, "_blank");
@@ -200,7 +228,7 @@ export default class SearchEngine extends React.Component {
     if (error) {
       // Error in communicating with the server, render the error message
       searchResults = (
-        <Grid item  xs={12}>
+        <Grid item xs={12}>
           <Typography inline variant="body1" align="center">
             Error: {error.message}
           </Typography>
