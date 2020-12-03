@@ -87,10 +87,10 @@ export default class TextBar extends React.Component {
   handleAdvancedUpdateChanges = () => {
     let tags = {
       query: this.state.query,
-      actor: this.state.actor,
-      production: this.state.production,
-      director: this.state.director,
-      genre: this.state.genre,
+      actor: this.state.actor.toLowerCase(),
+      production: this.state.production.toLowerCase(),
+      director: this.state.director.toLowerCase(),
+      genre: this.state.genre.toLowerCase(),
       runtime: this.state.runtime,
     };
     this.props.advanced(tags);
