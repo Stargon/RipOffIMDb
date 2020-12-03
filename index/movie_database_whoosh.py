@@ -14,9 +14,10 @@ from fuzzy_search.BKTree import BKTree
 app = Flask(__name__,
             template_folder='./frontend/src')
 
-imdb_vocab = []
+fuzzy_tree = None
 
 csv_file = 'database/database_master.csv'
+
 
 # homepage route
 @app.route('/', methods=['GET', 'POST'])
@@ -32,12 +33,13 @@ def results():
     """
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
+    global fuzzy_tree
 
-    if not imdb_vocab:
-        createDict(imdb_vocab)
+    if not fuzzy_tree:
+        fuzzy_tree = createBKTree()
     fuzzyTerms = []
     results = []
-    
+
     if request.method == 'POST':
         data = request.form
     else:
@@ -56,23 +58,26 @@ def results():
         results = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
     else:
         if fuzzySearch == 'True':
-            fuzzyTree = BKTree(imdb_vocab, 1)
             keywordQuery = keywordQuery.split()
             for word in keywordQuery:
-                fuzzyTerms += fuzzyTree.autocorrect(word, 1)
+                fuzzyTerms += fuzzy_tree.autocorrect(word, 1)
             for term in fuzzyTerms:
                 results += theWhooshSearch.basicSearch(term[0])
         else:
             results = theWhooshSearch.basicSearch(keywordQuery)
 
     return jsonify(results)
-    
-def createDict(vocabArr):
-    with open('database/vocabulary.csv', newline='') as csvfile:
+
+
+def createBKTree():
+    vocab = []
+    with open('database/vocabulary.csv', encoding='utf-8', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for line in reader:
-            vocabArr.append(line[0])
-    return vocabArr
+            vocab.append(line[0])
+
+    return BKTree(vocab, 0)
+
 
 class WhooshSearch(object):
     def __init__(self):
@@ -87,9 +92,13 @@ class WhooshSearch(object):
 
             # return the stored attributes
             for result in results:
-                returnables.append({'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'], 'title': result['Title'],
-                                    'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'], 'release_date': result['Release_date'],
-                                    'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'], 'runtime': result['RunTime']})
+                returnables.append(
+                    {'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'],
+                     'title': result['Title'],
+                     'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'],
+                     'release_date': result['Release_date'],
+                     'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'],
+                     'runtime': result['RunTime']})
             return returnables
 
     def advancedSearch(self, query_entered, Actor, Production, Director, Genre, minRuntime):
@@ -113,15 +122,20 @@ class WhooshSearch(object):
             user_q = qp.parse(title)
 
             if Actor and Genre and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director',
+                                                                                                   Director) and query.Term(
+                    'Production', Production)
             elif Actor and Genre and Director:
                 allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director)
             elif Actor and Genre and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production)
+                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production',
+                                                                                                   Production)
             elif Actor and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production)
+                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production',
+                                                                                                         Production)
             elif Genre and Director and Production:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
+                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production',
+                                                                                                         Production)
             elif Actor and Genre:
                 allow_q = query.Term('Genre', Genre) and query.Term('Actors', Actor)
             elif Actor and Director:
@@ -148,9 +162,13 @@ class WhooshSearch(object):
             else:
                 results = search.search(user_q)
             for result in results:
-                returnables.append({'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'], 'title': result['Title'],
-                                    'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'], 'release_date': result['Release_date'],
-                                    'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'], 'runtime': result['RunTime']})
+                returnables.append(
+                    {'id': result['id'], 'page_url': result['page_url'], 'image_url': result['image_url'],
+                     'title': result['Title'],
+                     'actors': result['Actors'], 'production': result['Production'], 'director': result['Director'],
+                     'release_date': result['Release_date'],
+                     'genre': result['Genre'], 'awards': result['Awards'], 'critics': result['Critic_Score'],
+                     'runtime': result['RunTime']})
             return returnables
 
     def index(self):
@@ -160,22 +178,22 @@ class WhooshSearch(object):
                 """
         # set up to only index once
         schema = Schema(id=ID(stored=True),
-                                        image_url=TEXT(stored=True),
-                                        page_url=TEXT(stored=True),
-                                        Title=TEXT(stored=True),
-                                        Actors=TEXT(stored=True),
-                                        Production=TEXT(stored=True),
-                                        Director=TEXT(stored=True),
-                                        Release_date=TEXT(stored=True),
-                                        Genre=TEXT(stored=True),
-                                        Awards=TEXT(stored=True),
-                                        Critic_Score=TEXT(stored=True),
-                                        RunTime=TEXT(stored=True))
+                        image_url=TEXT(stored=True),
+                        page_url=TEXT(stored=True),
+                        Title=TEXT(stored=True),
+                        Actors=TEXT(stored=True),
+                        Production=TEXT(stored=True),
+                        Director=TEXT(stored=True),
+                        Release_date=TEXT(stored=True),
+                        Genre=TEXT(stored=True),
+                        Awards=TEXT(stored=True),
+                        Critic_Score=TEXT(stored=True),
+                        RunTime=TEXT(stored=True))
 
         if not os.path.exists('indexdir'):
             os.mkdir('indexdir')
 
-        if(exists_in('indexdir') != True):
+        if (exists_in('indexdir') != True):
             indexer = create_in('indexdir', schema)
             writer = indexer.writer()
 
@@ -183,22 +201,23 @@ class WhooshSearch(object):
 
             for i in range(len(df)):
                 writer.add_document(id=str(df.loc[i, 'id']),
-                                                        image_url=str(df.loc[i, 'image_url']),
-                                                        page_url=str(df.loc[i, 'page_url']),
-                                                        Title=str(df.loc[i, 'Title']),
-                                                        Actors=str(df.loc[i, 'Actors']),
-                                                        Production=str(df.loc[i, 'Production']),
-                                                        Director=str(df.loc[i, 'Director']),
-                                                        Release_date=str(df.loc[i, 'Release_date']),
-                                                        Genre=str(df.loc[i, 'Genre']),
-                                                        Awards=str(df.loc[i, 'Awards']),
-                                                        Critic_Score=str(df.loc[i, 'Critic_Score']),
-                                                        RunTime=str(df.loc[i, 'Runtime']))
+                                    image_url=str(df.loc[i, 'image_url']),
+                                    page_url=str(df.loc[i, 'page_url']),
+                                    Title=str(df.loc[i, 'Title']),
+                                    Actors=str(df.loc[i, 'Actors']),
+                                    Production=str(df.loc[i, 'Production']),
+                                    Director=str(df.loc[i, 'Director']),
+                                    Release_date=str(df.loc[i, 'Release_date']),
+                                    Genre=str(df.loc[i, 'Genre']),
+                                    Awards=str(df.loc[i, 'Awards']),
+                                    Critic_Score=str(df.loc[i, 'Critic_Score']),
+                                    RunTime=str(df.loc[i, 'Runtime']))
             writer.commit()
             self.indexer = indexer
-            
+
         else:
             self.indexer = open_dir('indexdir')
+
 
 if __name__ == '__main__':
     global theWhooshSearch
