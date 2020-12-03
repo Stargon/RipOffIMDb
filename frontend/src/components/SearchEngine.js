@@ -70,7 +70,6 @@ export default class SearchEngine extends React.Component {
 
   handleAdvancedUpdate = async (update) => {
     this.setState({ isLoaded: false, error: null });
-    console.log(JSON.stringify(update));
     if (
       update !== "" &&
       update !== undefined &&
@@ -81,7 +80,6 @@ export default class SearchEngine extends React.Component {
       // const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${update}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&rating=${runtime[0]}-${runtime[1]}`;
       // Runtime is currently broken
       const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}`;
-      alert(request);
       this.setState({ isLoaded: true });
       await fetch(request)
         .then((res) => res.json())
