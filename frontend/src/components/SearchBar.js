@@ -75,7 +75,9 @@ export default class TextBar extends React.Component {
 
   // Event handler to return the query
   onRequestSearchEvent(query) {
-    this.setState(this.cleanState);
+    let resetState = this.cleanState
+    resetState.fuzzy = this.state.fuzzy
+    this.setState(resetState);
     this.props.query(query);
     this.props.advanced("");
     this.setState({ query: query });
