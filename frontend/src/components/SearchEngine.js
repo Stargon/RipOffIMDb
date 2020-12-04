@@ -69,7 +69,6 @@ export default class SearchEngine extends React.Component {
         // No fuzzy search
         request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
       }
-      alert(request);
       await fetch(request)
         .then((res) => res.json())
         .then(
@@ -202,9 +201,9 @@ export default class SearchEngine extends React.Component {
                             : movie.genre}
                         </Typography>
                         <Typography>
-                          {movie.runtime.includes("nan")
+                          {movie.runtime === 0
                             ? "Runtime unavailable"
-                            : movie.runtime}
+                            : `Runtime: ${movie.runtime}`}
                         </Typography>
                       </CardContent>
                       <CardActions>
