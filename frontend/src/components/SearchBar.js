@@ -9,6 +9,13 @@ import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Fab";
 import FindReplaceIcon from "@material-ui/icons/FindReplace";
 
+
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
+
 const genresList = [
   "",
   "Drama",
@@ -49,6 +56,7 @@ export default class TextBar extends React.Component {
       director: "",
       genre: "",
       runtime: [25, 75],
+      fuzzy: ""
     };
     this.cleanState = this.state;
     // ES6 methods need to be binding to this instance
@@ -63,6 +71,7 @@ export default class TextBar extends React.Component {
       this
     );
     this.handleGenreChange = this.handleGenreChange.bind(this);
+    this.handleFuzzyChange = this.handleFuzzyChange.bind(this)
   }
 
   // Event handler to return the query
@@ -111,6 +120,10 @@ export default class TextBar extends React.Component {
 
   handleGenreChange(event) {
     this.setState({ genre: event.target.value });
+  }
+
+  handleFuzzyChange(event) {
+    this.setState({ fuzzy:  event.target.value})
   }
 
   // Additional render options
@@ -226,7 +239,25 @@ export default class TextBar extends React.Component {
                 margin: "0 auto",
                 width: "100%",
               }}
-            />
+            />       
+            <Radio
+            checked={this.state.fuzzy === ""}
+            onChange={this.handleFuzzyChange}
+            value=""
+            label="No Fuzzy"
+          />
+          <Radio
+            checked={this.state.fuzzy === 'BK-Tree Fuzzy'}
+            onChange={this.handleFuzzyChange}
+            value="BK-Tree Fuzzy"
+            label="BK-Tree Fuzzy"
+          />
+          <Radio
+            checked={this.state.fuzzy === 'Whoosh Fuzzy'}
+            onChange={this.handleFuzzyChange}
+            value="Whoosh Fuzzy"
+            label="Whoosh Fuzzy"
+          />
           </Toolbar>
           {advancedSearchOptions}
         </AppBar>
