@@ -1,8 +1,9 @@
 class BKTreeNode(object):
-    def __init__(self, text):
+    def __init__(self, text, tree=None):
         self.text = text
         self.children = list()
         self.distance_to_parent = 0
+        self.tree = tree
 
     def minimum(self, numbers):
         x = numbers[0]
@@ -14,13 +15,16 @@ class BKTreeNode(object):
     def edit_distance(self, node):
         # returns the edit distance from this node to the input node
         # create a 2d array comparing the nodes
-        distances = [[0 for i in range(len(self.text) + 1)] for j in range(len(node.text) + 1)]
+        distances = [[0 for col in range(len(self.text) + 1)] for row in range(len(node.text) + 1)]
 
-        row_count = 0
-        col_count = 0
+        row_count = 1
+        col_count = 1
         for i in range(len(distances)):
             for j in range(len(distances[i])):
-                if i == 0:
+                if i == 0 and j == 0:
+                    # set first position
+                    distances[i][j] = 0
+                elif i == 0:
                     # set first row
                     distances[i][j] = row_count
                     row_count += 1
