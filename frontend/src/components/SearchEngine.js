@@ -54,7 +54,7 @@ export default class SearchEngine extends React.Component {
 
   handleQueryUpdate = async (update) => {
     // Set default state for new query in update while loading
-    this.setState({ isLoaded: false, error: null, results: [] });
+    this.setState({ isLoaded: false, error: null});
     if (update !== "" && update !== undefined && (this.state.query !== update || this.state.changedFuzzy === true)) {
       // Updated query is different than current query, begin fetching data
       this.setState({ query: update });
@@ -88,7 +88,7 @@ export default class SearchEngine extends React.Component {
       this.setState({ isLoaded: true });
     } else {
       // no input given, clear page
-      this.setState({ isLoaded: true, query: "" });
+      this.setState({ isLoaded: true, query: "", results: [] });
     }
     this.setState({changedFuzzy : false})
   };
