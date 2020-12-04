@@ -9,6 +9,12 @@ import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Fab";
 import FindReplaceIcon from "@material-ui/icons/FindReplace";
 
+import Radio from "@material-ui/core/Radio";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import FormControl from "@material-ui/core/FormControl";
+import FormLabel from "@material-ui/core/FormLabel";
+
 const genresList = [
   "",
   "Drama",
@@ -49,6 +55,7 @@ export default class TextBar extends React.Component {
       director: "",
       genre: "",
       runtime: [25, 75],
+      fuzzy: "",
     };
     this.cleanState = this.state;
     // ES6 methods need to be binding to this instance
@@ -63,6 +70,7 @@ export default class TextBar extends React.Component {
       this
     );
     this.handleGenreChange = this.handleGenreChange.bind(this);
+    this.handleFuzzyChange = this.handleFuzzyChange.bind(this);
   }
 
   // Event handler to return the query
@@ -111,6 +119,12 @@ export default class TextBar extends React.Component {
 
   handleGenreChange(event) {
     this.setState({ genre: event.target.value });
+  }
+
+  handleFuzzyChange(event) {
+    const fuzzySelect = event.target.value;
+    this.setState({ fuzzy: fuzzySelect });
+    this.props.fuzzy(fuzzySelect);
   }
 
   // Additional render options
@@ -224,9 +238,37 @@ export default class TextBar extends React.Component {
               }}
               style={{
                 margin: "0 auto",
-                width: "100%",
+                width: "60%",
               }}
             />
+
+            <RadioGroup
+              row
+              aria-label="gender"
+              name="fuzzy"
+              default=""
+              value={this.state.fuzzy}
+              onChange={this.handleFuzzyChange}
+            >
+              <FormControlLabel
+                value=""
+                control={<Radio />}
+                label="No Fuzzy"
+                labelPlacement="bottom"
+              />
+              <FormControlLabel
+                value="BK-Tree Fuzzy"
+                control={<Radio />}
+                label="BK-Tree Fuzzy"
+                labelPlacement="bottom"
+              />
+              <FormControlLabel
+                value="Whoosh Fuzzy"
+                control={<Radio />}
+                label="Whoosh Fuzzy"
+                labelPlacement="bottom"
+              />
+            </RadioGroup>
           </Toolbar>
           {advancedSearchOptions}
         </AppBar>
