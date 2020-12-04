@@ -22,6 +22,8 @@ export default class SearchEngine extends React.Component {
     super(props);
     this.state = {
       query: "",
+      isFuzzy: false,
+      toWhoosh: false,
       advanced: "",
       results: [],
       error: null,
@@ -35,17 +37,39 @@ export default class SearchEngine extends React.Component {
     this.renderSearch = this.renderSearch.bind(this);
     this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
     this.isAdvancedUpdate = this.isAdvancedUpdate.bind(this);
+    this.handleFuzzyUpdate = this.handleFuzzyUpdate.bind(this);
   }
+
+  handleFuzzyUpdate = (fuzzyUpdate) => {
+    if (fuzzyUpdate === "") {
+      this.setState({ isFuzzy: false });
+    } else if (fuzzyUpdate === "BK-Tree Fuzzy") {
+      this.setState({ isFuzzy: true, toWhoosh: false });
+    } else {
+      this.setState({ isFuzzy: true, toWhoosh: true });
+    }
+  };
 
   handleQueryUpdate = async (update) => {
     // Set default state for new query in update while loading
     this.setState({ isLoaded: false, error: null, results: [] });
     if (update !== "" && update !== undefined && this.state.query !== update) {
       // Updated query is different than current query, begin fetching data
-
-      // Format simple request string, and fetch results
       this.setState({ query: update });
-      const request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
+
+      // Format simple request string, and fetch results (check for fuzzy first)
+      let request = "";
+      if (this.state.isFuzzy === true && this.state.toWhoosh === true) {
+        // Fuzzy search with Whoosh default fuzzy
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=true`;
+      } else if (this.state.isFuzzy === true && this.state.toWhoosh === false) {
+        // Fuzzy search with custom BK Tree implementation
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=false`;
+      } else {
+        // No fuzzy search
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
+      }
+      alert(request);
       await fetch(request)
         .then((res) => res.json())
         .then(
@@ -159,8 +183,11 @@ export default class SearchEngine extends React.Component {
                         }
                         <Typography>
                           <Box display="flex" flexDirection="row">
-                            <Box fontWeight="fontWeightBold" justifyContent="left">
-                              Actors: 
+                            <Box
+                              fontWeight="fontWeightBold"
+                              justifyContent="left"
+                            >
+                              Actors:
                             </Box>
                             <Box flexGrow={1}>
                               {movie.actors.includes("nan")
@@ -267,6 +294,7 @@ export default class SearchEngine extends React.Component {
           <Grid item xs={12}>
             <TextBar
               query={this.handleQueryUpdate}
+              fuzzy={this.handleFuzzyUpdate}
               advanced={this.handleAdvancedUpdate}
             ></TextBar>
           </Grid>
