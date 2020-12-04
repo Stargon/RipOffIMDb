@@ -8,7 +8,7 @@ import os.path
 from whoosh.index import create_in, open_dir, exists_in, Index
 from whoosh.fields import *
 from whoosh.qparser import QueryParser, MultifieldParser, query
-from whoosh.query import NumericRange
+from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 import pandas as pd
 from fuzzy_search.BKTree import BKTree
@@ -21,14 +21,13 @@ fuzzy_tree = None
 
 csv_file = 'database/database_master.csv'
 
-
 # homepage route
 @app.route('/', methods=['GET', 'POST'])
 def results():
-    """ route for fetch request from frontend
+    """ route for fetch request from front-end
     :var searchType: One of two values: basic or advanced to specify the type of search executed - required field
     :var keywordQuery: movie title for advanced search or query for basic search - required field
-    :var fuzzySearch: boolean of if fuzzysearch if used within basic search - optional field
+    :var fuzzySearch: boolean of if fuzzy search is used within basic search - optional field
     :var actor: advanced search field - optional field
     :var production_company: advanced search field - optional field
     :var genre: advanced search field - optional field
@@ -36,24 +35,31 @@ def results():
     """
 
     theWhooshSearch = WhooshSearch()
+    print('Building database')
     theWhooshSearch.index()
+    print('Database completed')
     global fuzzy_tree
 
     if not fuzzy_tree:
+        print('Building fuzzy search')
         fuzzy_tree = createBKTree()
+        print('Fuzzy search completed')
     fuzzy_terms = []
     r = []
 
     if request.method == 'POST':
         data = request.form
+        print('Received POST request')
     else:
         data = request.args
+        print('Received GET request')
 
     searchType = data.get('searchType')
     keywordQuery = data.get('keywordQuery')
     fuzzySearch = data.get('fuzzySearch')
 
     if keywordQuery:
+        print('Type: ' + searchType + ', keywords: ' + keywordQuery)
         if searchType == 'advanced':
             actor = data.get('actor')
             production_company = data.get('production')
@@ -62,15 +68,18 @@ def results():
             runTime = data.get('runtime')
             r = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
         else:
-            if fuzzySearch == 'True':
-                keywordQuery = keywordQuery.split()
-
-                for word in keywordQuery:
-                    fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
-                for term in fuzzy_terms:
-                    r += theWhooshSearch.basicSearch(term[0])
+            if fuzzySearch == 'True' or fuzzySearch == 'true':
+                whooshFuzzy = data.get('whoosh')
+                if whooshFuzzy == 'True':
+                    r = theWhooshSearch.basicSearch(keywordQuery, whooshFuzzy)
+                else:
+                    keywordQuery = keywordQuery.split()
+                    for word in keywordQuery:
+                        fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
+                    for term in fuzzy_terms:
+                        r += theWhooshSearch.basicSearch(term[0], False)
             else:
-                r = theWhooshSearch.basicSearch(keywordQuery)
+                r = theWhooshSearch.basicSearch(keywordQuery, False)
 
     return jsonify(r)
 
@@ -89,10 +98,13 @@ class WhooshSearch(object):
     def __init__(self):
         super(WhooshSearch, self).__init__()
 
-    def basicSearch(self, query_entered):
+    def basicSearch(self, query_entered, whooshFuzzy):
         returnables = []
         with self.indexer.searcher() as search:
-            query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
+            if whooshFuzzy == 'True':
+                query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema, termclass=FuzzyTerm)
+            else:
+                query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
             query = query.parse(query_entered)
             results = search.search(query, limit=None, terms=True)
 
