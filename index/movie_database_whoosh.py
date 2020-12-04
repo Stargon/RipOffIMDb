@@ -39,6 +39,9 @@ def results():
     theWhooshSearch.index()
     print('Database completed')
     global fuzzy_tree
+    length = 0
+    hasNext = None
+    nextPageNumber = None
 
     if not fuzzy_tree:
         print('Building fuzzy search')
@@ -57,6 +60,7 @@ def results():
     searchType = data.get('searchType')
     keywordQuery = data.get('keywordQuery')
     fuzzySearch = data.get('fuzzySearch')
+    page = int(data.get('pageNumber'))
 
     if keywordQuery:
         print('Type: ' + searchType + ', keywords: ' + keywordQuery)
@@ -66,23 +70,28 @@ def results():
             director = data.get('director')
             genre = data.get('genre')
             runTime = data.get('runtime')
-            r = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime)
+            r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, page)
         else:
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
                 if whooshFuzzy == 'True':
-                    r = theWhooshSearch.basicSearch(keywordQuery, whooshFuzzy)
+                    r, length = theWhooshSearch.basicSearch(keywordQuery, whooshFuzzy, page)
                 else:
                     keywordQuery = keywordQuery.split()
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
-                        r += theWhooshSearch.basicSearch(term[0], False)
+                        temp, length = theWhooshSearch.basicSearch(term[0], False, page)
+                        results += temp
             else:
-                r = theWhooshSearch.basicSearch(keywordQuery, False)
+                r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
 
-    return jsonify(r)
+    if nextPage(length, page):
+        hasNext = True
+        nextPageNumber = page + 1
+    previous = page - 1
 
+    return '{} {} {} {}'.format(jsonify(r), hasNext, nextPageNumber, previous)
 
 def createBKTree():
     vocab = []
@@ -93,12 +102,15 @@ def createBKTree():
 
     return BKTree(vocab, 0)
 
+def nextPage(length, pageNumber):
+    return (int(length) - int(pageNumber) * 10) > 1
+
 
 class WhooshSearch(object):
     def __init__(self):
         super(WhooshSearch, self).__init__()
 
-    def basicSearch(self, query_entered, whooshFuzzy):
+    def basicSearch(self, query_entered, whooshFuzzy, pageNumber):
         returnables = []
         with self.indexer.searcher() as search:
             if whooshFuzzy == 'True':
@@ -106,7 +118,7 @@ class WhooshSearch(object):
             else:
                 query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
             query = query.parse(query_entered)
-            results = search.search(query, limit=None, terms=True)
+            results = search.search_page(query, int(pageNumber))
 
             # return the stored attributes
             for result in results:
@@ -123,9 +135,9 @@ class WhooshSearch(object):
                      'awards': result['Awards'],
                      'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
-            return returnables
+            return returnables, len(results)
 
-    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime):
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, pageNumber):
         ''' provides filters to search across multiple fields based on user input
             query_entered/title is a required field, all other fields are optional
         '''
@@ -208,7 +220,7 @@ class WhooshSearch(object):
             if allow_q:
                 results = search.search(user_q, filter=allow_q)
             else:
-                results = search.search(user_q)
+                results = search.search_page(user_q, int(pageNumber))
             for result in results:
                 returnables.append(
                     {'id': result['id'],
@@ -223,7 +235,7 @@ class WhooshSearch(object):
                      'awards': result['Awards'],
                      'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
-            return returnables
+            return returnables, len(results)
 
     def index(self):
         """ Establishes the whoosh database for the documents in our csv file
