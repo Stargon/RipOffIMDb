@@ -54,7 +54,7 @@ export default class TextBar extends React.Component {
       production: "",
       director: "",
       genre: "",
-      runtime: [25, 75],
+      runtime: [0, 330],
       fuzzy: "",
     };
     this.cleanState = this.state;
@@ -205,6 +205,7 @@ export default class TextBar extends React.Component {
               aria-labelledby="range-slider"
               getAriaValueText={this.valuetext}
               color="secondary"
+              max ={500}
             />
           </Box>
           <Box p={1} m={1} pl={2} flexShrink={0}>

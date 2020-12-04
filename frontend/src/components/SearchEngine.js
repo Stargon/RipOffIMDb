@@ -102,9 +102,8 @@ export default class SearchEngine extends React.Component {
     ) {
       this.setState({ advanced: update });
       let { query, actor, production, director, genre, runtime } = update;
-      // const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${update}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}`;
-      // Runtime is currently broken
-      const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}`;
+      const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}`;
+      console.log(request)
       this.setState({ isLoaded: true });
       await fetch(request)
         .then((res) => res.json())
