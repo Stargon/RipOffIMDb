@@ -28,6 +28,7 @@ export default class SearchEngine extends React.Component {
       results: [],
       error: null,
       isLoaded: true,
+      changedFuzzy: false,
     };
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
@@ -41,19 +42,20 @@ export default class SearchEngine extends React.Component {
   }
 
   handleFuzzyUpdate = (fuzzyUpdate) => {
-    if (fuzzyUpdate === "") {
+    if (fuzzyUpdate === "" && this.state.isFuzzy !== false) {
       this.setState({ isFuzzy: false });
-    } else if (fuzzyUpdate === "BK-Tree Fuzzy") {
+    } else if (fuzzyUpdate === "BK-Tree Fuzzy" && this.state.toWhoosh !== false) {
       this.setState({ isFuzzy: true, toWhoosh: false });
     } else {
       this.setState({ isFuzzy: true, toWhoosh: true });
     }
+    this.setState({changedFuzzy: true})
   };
 
   handleQueryUpdate = async (update) => {
     // Set default state for new query in update while loading
     this.setState({ isLoaded: false, error: null, results: [] });
-    if (update !== "" && update !== undefined && this.state.query !== update) {
+    if (update !== "" && update !== undefined && (this.state.query !== update || this.state.changedFuzzy === true)) {
       // Updated query is different than current query, begin fetching data
       this.setState({ query: update });
 
@@ -88,6 +90,7 @@ export default class SearchEngine extends React.Component {
       // no input given, clear page
       this.setState({ isLoaded: true, query: "" });
     }
+    this.setState({changedFuzzy : false})
   };
 
   handleAdvancedUpdate = async (update) => {
@@ -99,7 +102,7 @@ export default class SearchEngine extends React.Component {
     ) {
       this.setState({ advanced: update });
       let { query, actor, production, director, genre, runtime } = update;
-      // const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${update}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&rating=${runtime[0]}-${runtime[1]}`;
+      // const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${update}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}`;
       // Runtime is currently broken
       const request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}`;
       this.setState({ isLoaded: true });
