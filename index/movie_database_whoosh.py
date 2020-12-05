@@ -60,10 +60,8 @@ def results():
 
     if request.method == 'POST':
         data = request.form
-        print('Received POST request')
     else:
         data = request.args
-        print('Received GET request')
 
     searchType = data.get('searchType')
     keywordQuery = data.get('keywordQuery')
@@ -109,11 +107,9 @@ def results():
             else:
                 r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
 
-    if nextPage(length, page):
-        hasNext = True
-        nextPageNumber = page + 1
+    nextPageNumber = page + 1
     previous = page - 1
-    returnResults = {'isPage': hasNext, 'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
+    returnResults = {'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
     return jsonify(returnResults)
 
 def createBKTree():
@@ -250,9 +246,9 @@ class WhooshSearch(object):
                 allow_q = query.NumericRange('RunTime', runtime[0], runtime[1])
 
             if allow_q:
-                results = search.search(user_q, filter=allow_q, limit=None)
+                results = search.search(user_q, filter=allow_q, limit=100)
             else:
-                results = search.search(user_q, limit=None)
+                results = search.search(user_q, limit=100)
             
             for result in results:
                 returnables.append(
