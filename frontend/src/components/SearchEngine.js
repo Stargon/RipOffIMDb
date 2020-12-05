@@ -45,7 +45,6 @@ export default class SearchEngine extends React.Component {
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.fetchQuery = this.fetchQuery.bind(this);
-    this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
@@ -241,7 +240,7 @@ export default class SearchEngine extends React.Component {
     }
   };
 
-  renderSearch = (classes) => {
+  renderSearch = () => {
     if (!this.state.results) {
       // Results do not exist (maybe in a middle of a promise/state change),
       // do not render
@@ -252,25 +251,21 @@ export default class SearchEngine extends React.Component {
       <Grid item xs={12}>
         <CssBaseline />
         <main>
-          <Container className={classes.cardGrid} maxWidth="md">
+          <Container >
             {/* End hero unit */}
-            <Grid container spacing={4}>
+            <Grid container spacing={4} alignItems="stretch">
               {
                 // From example constant, map a card for each element
-                // (adjust with json object later)
-                // Note that example uses labels that are capital, adjust them
-                // later based on response from Whoosh backend
                 this.state.results.map((movie) => (
                   <Grid item key={movie} xs={12} sm={6} md={4}>
-                    <Card className={classes.card}>
+                    <Card  variant="outlined" style={{height:610, overflow: "auto", overflowY:"auto"}}>
                       <CardMedia
-                        className={classes.cardMedia}
                         component="img"
                         image={movie.image_url}
                         title={movie.title}
                         onError={this.handleImageError}
                       />
-                      <CardContent className={classes.cardContent}>
+                      <CardContent justifyContent="center">
                         {
                           // Render title
                         }
@@ -281,14 +276,14 @@ export default class SearchEngine extends React.Component {
                           // Render Actors
                         }
                         <Typography>
-                          <Box display="flex" flexDirection="row">
+                          <Box display="flex" flexDirection="row" m={0.5}>
                             <Box
                               fontWeight="fontWeightBold"
                               justifyContent="left"
                             >
                               Actors:
                             </Box>
-                            <Box flexGrow={1}>
+                            <Box flexGrow={1} pl={2} align="left">
                               {movie.actors.includes("nan")
                                 ? "No actors listed"
                                 : movie.actors}
@@ -326,43 +321,8 @@ export default class SearchEngine extends React.Component {
     );
   };
 
-  makeStyles(theme) {
-    return {
-      icon: {
-        marginRight: theme.spacing(2),
-      },
-      heroContent: {
-        backgroundColor: theme.palette.background.paper,
-        padding: theme.spacing(8, 0, 6),
-      },
-      heroButtons: {
-        marginTop: theme.spacing(4),
-      },
-      cardGrid: {
-        paddingTop: theme.spacing(8),
-        paddingBottom: theme.spacing(8),
-      },
-      card: {
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      },
-      cardMedia: {
-        paddingTop: "56.25%", // 16:9
-      },
-      cardContent: {
-        flexGrow: 1,
-      },
-      footer: {
-        backgroundColor: theme.palette.background.paper,
-        padding: theme.spacing(6),
-      },
-    };
-  }
-
   render() {
     const update = this.state.query;
-    const classes = makeStyles();
     const { error, isLoaded, results } = this.state;
 
     // Fancy error hanadling
@@ -390,7 +350,7 @@ export default class SearchEngine extends React.Component {
     let searchResults = null;
     if ((update !== "" && update !== undefined) || results.length >= 0) {
       // Conditionally render the results
-      searchResults = this.renderSearch(classes);
+      searchResults = this.renderSearch();
     }
 
     // Render pagination if able
