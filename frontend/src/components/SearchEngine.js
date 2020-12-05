@@ -74,13 +74,13 @@ export default class SearchEngine extends React.Component {
       let request = "";
       if (this.state.isFuzzy === true && this.state.toWhoosh === true) {
         // Fuzzy search with Whoosh default fuzzy
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=true`;
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=true&pageNumber=1`;
       } else if (this.state.isFuzzy === true && this.state.toWhoosh === false) {
         // Fuzzy search with custom BK Tree implementation
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=false`;
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=false&pageNumber=1`;
       } else {
         // No fuzzy search
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}`;
+        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&pageNumber=1`;
       }
       await fetch(request)
         .then((res) => res.json())
