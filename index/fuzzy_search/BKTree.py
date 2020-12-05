@@ -1,30 +1,22 @@
-from .BKTree_Node import BKTreeNode
+from BKTree_Node import BKTreeNode
+import csv
 
 
 class BKTree(object):
-    def __init__(self, vocabulary, root_index, isMaster=False, small_tree_tolerance=2):
-        # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
-        self.isMaster = isMaster
-        self.small_tree_tolerance = small_tree_tolerance
-        self.found_autocorrect_tree = None
-        if self.isMaster:
-            # master tree is a tree of trees
-            self.root = BKTreeNode(vocabulary[root_index].root.text, tree=vocabulary[root_index])
-            for tree in vocabulary:
-                # don't add the root twice
-                if tree == vocabulary[root_index]:
-                    continue
-                self.add_word(tree.root.text, tree=tree)
-        else:
+    def __init__(self, vocabulary, root_index, decode_file_path=''):
+        if decode_file_path == '':
+            # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
             self.root = BKTreeNode(vocabulary[root_index])
             for word in vocabulary:
                 # don't add the root twice!
                 if word == vocabulary[root_index]:
                     continue
                 self.add_word(word)
+        else:
+            self.decode_tree(decode_file_path)
 
-    def add_word(self, word, tree=None):
-        self.add_node(self.root, BKTreeNode(word, tree=tree))
+    def add_word(self, word):
+        self.add_node(self.root, BKTreeNode(word))
 
     def add_node(self, current_node, node):
         distance = node.edit_distance(current_node)
@@ -42,32 +34,21 @@ class BKTree(object):
     def print_tree(self, current_node):
         if current_node is None:
             return
+        # collect the text for all children
         child_words = list()
         for node in current_node.children:
             child_words.append(node.text)
+
         print(current_node.text, current_node.distance_to_parent, child_words)
-        if current_node.tree:
-            print('child tree')
-            current_node.tree.print_tree(current_node.tree.root)
+
+        # recurse for all children
         for node in current_node.children:
             self.print_tree(node)
 
     def autocorrect(self, word, tolerance):
-        # if I'm the master tree, return the possibilities from the first tree found within tolerance
-        if self.isMaster:
-            # find the tree within tolerance + small_tree_tolerance
-            self.found_autocorrect_tree = None
-            self.autocorrect_helper_master(tolerance + self.small_tree_tolerance, self.root, BKTreeNode(word))
-
-            # now autocorrect for the tree we just found
-            if self.found_autocorrect_tree:
-                return self.found_autocorrect_tree.autocorrect(word, tolerance)
-            else:
-                print('tree not found')
-        else:
-            possibilities = list()
-            self.autocorrect_helper(tolerance, self.root, BKTreeNode(word), possibilities)
-            return possibilities
+        possibilities = list()
+        self.autocorrect_helper(tolerance, self.root, BKTreeNode(word), possibilities)
+        return possibilities
 
     def autocorrect_helper(self, tolerance, current_node, compare_node, possibilities):
         if current_node is None:
@@ -84,20 +65,57 @@ class BKTree(object):
             if r[0] <= node.distance_to_parent <= r[1]:
                 self.autocorrect_helper(tolerance, node, compare_node, possibilities)
 
-    def autocorrect_helper_master(self, tolerance, current_node, compare_node):
-        # return the first tree found that is within the tolerance
-        # tree is pass by reference, so it must start as an empty list
-        if current_node is None or self.found_autocorrect_tree:
-            return
+    def encode_tree(self):
+        encoding = list()
+        self.encode_tree_helper(self.root, encoding)
 
-        distance = current_node.edit_distance(compare_node)
-        # is this the word?
-        if distance <= tolerance:
-            self.found_autocorrect_tree = current_node.tree
-            return
+        with open('encoded_tree.csv', 'w', encoding='utf-8', newline='\n') as file:
+            writer = csv.writer(file)
+            writer.writerow(encoding)
 
-        # check all the children, only recurse for ones within the range
-        r = [distance - tolerance, distance + tolerance]
-        for node in current_node.children:
-            if r[0] <= node.distance_to_parent <= r[1]:
-                self.autocorrect_helper_master(tolerance, node, compare_node)
+    def encode_tree_helper(self, current_node, encoding):
+        if current_node is None:
+            return
+        encoding.append(current_node.text)
+        encoding.append(str(current_node.distance_to_parent))
+        encoding.append('C[')
+        for child in current_node.children:
+            self.encode_tree_helper(child, encoding)
+        encoding.append('C]')
+
+    def decode_tree(self, file_path):
+        with open(file_path, 'r', encoding='utf-8', newline='\n') as file:
+            reader = csv.reader(file)
+            line = next(reader)
+            self.root = self.decode_tree_helper(line)
+
+    def decode_tree_helper(self, line):
+        stack = []
+        textStack = []
+        current_node = None
+        for element in line:
+            if element.isnumeric() and current_node:
+                current_node.distance_to_parent = int(element)
+            elif element == 'C[':
+                stack.append(current_node)
+                stack.append(element)
+                textStack.append(current_node.text)
+                textStack.append(element)
+                current_node = None
+            elif element == 'C]':
+                children = []
+                node = stack.pop()
+                textStack.pop()
+                while node != 'C[':
+                    children.append(node)
+                    node = stack.pop()
+                    textStack.pop()
+
+                parent = stack.pop()
+                parent.children = children
+                stack.append(parent)
+            else:
+                # make new node
+                current_node = BKTreeNode(element)
+        return stack.pop()
+
