@@ -111,7 +111,7 @@ def results():
         nextPageNumber = page + 1
     previous = page - 1
 
-    return '{} {} {} {}'.format(jsonify(r), hasNext, nextPageNumber, previous)
+    return '{} {} {} {}'.format(r, hasNext, nextPageNumber, previous)
 
 def createBKTree():
     vocab = []
