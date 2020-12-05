@@ -106,8 +106,10 @@ def results():
                     r = r[ page * 10 - 10:page * 10 ]  
             else:
                 r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
-
-    nextPageNumber = page + 1
+    
+    # Check if there are new pages
+    if nextPage(length, page):
+        nextPageNumber = page + 1
     previous = page - 1
     returnResults = {'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
     return jsonify(returnResults)
