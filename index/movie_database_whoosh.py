@@ -86,9 +86,10 @@ def results():
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
-                        temp, length = theWhooshSearch.advancedSearch(term[0], actor, production_company, director, genre, runTime, False, page)
-                        r += temp
-                        
+                        tempResult, tempLength = theWhooshSearch.advancedSearch(term[0], actor, production_company, director, genre, runTime, False, page)
+                        r += tempResult
+                        length += tempLength
+                    r = r[ page * 10 - 10:page * 10 ]    
             else:
                 r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, False, page)
         
@@ -102,8 +103,10 @@ def results():
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
-                        temp, length = theWhooshSearch.basicSearch(term[0], False, page)
-                        r += temp
+                        tempResult, tempLength = theWhooshSearch.basicSearch(term[0], False, page)
+                        r += tempResult
+                        length += tempLength
+                    r = r[ page * 10 - 10:page * 10 ]  
             else:
                 r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
 
