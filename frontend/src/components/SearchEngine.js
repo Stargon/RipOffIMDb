@@ -84,7 +84,8 @@ export default class SearchEngine extends React.Component {
       update !== undefined &&
       (this.state.query !== update ||
         this.state.changedFuzzy === true ||
-        pageNumber !== this.state.nextPage)
+        pageNumber !== this.state.nextPage ||
+        typeof this.state.advanced !== "string")
     ) {
       // Updated query is different than current query, begin fetching data
       this.setState({ isLoaded: false, error: null });
