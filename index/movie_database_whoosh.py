@@ -88,6 +88,7 @@ def results():
                     for term in fuzzy_terms:
                         temp, length = theWhooshSearch.advancedSearch(term[0], actor, production_company, director, genre, runTime, False, page)
                         r += temp
+                        
             else:
                 r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, False, page)
         
@@ -110,8 +111,8 @@ def results():
         hasNext = True
         nextPageNumber = page + 1
     previous = page - 1
-
-    return '{} {} {} {}'.format(r, hasNext, nextPageNumber, previous)
+    returnResults = {'isPage': hasNext, 'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
+    return jsonify(returnResults)
 
 def createBKTree():
     vocab = []
