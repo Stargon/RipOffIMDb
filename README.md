@@ -37,7 +37,7 @@ cd index
 # Execute the backend
 python3 movie_database_whoosh.py
 # If you are in a bash shell
-./move_database_whoosh.py
+./movie_database_whoosh.py
 ```
 
 ### Backend
