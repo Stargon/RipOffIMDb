@@ -3,8 +3,8 @@ import csv
 
 
 class BKTree(object):
-    def __init__(self, vocabulary, root_index, decode_file_path=''):
-        if decode_file_path == '':
+    def __init__(self, vocabulary=None, root_index=0, decode_file_path=''):
+        if decode_file_path == '' and vocabulary is not None:
             # loop through the vocabulary constructing a tree with root word at vocabulary[root_index]
             self.root = BKTreeNode(vocabulary[root_index])
             for word in vocabulary:
