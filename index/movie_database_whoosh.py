@@ -21,6 +21,20 @@ fuzzy_tree = None
 
 csv_file = 'database/database_master.csv'
 
+@app.before_first_request
+def before_first_request_func():
+    global theWhooshSearch
+    theWhooshSearch = WhooshSearch()
+    print('Building database')
+    theWhooshSearch.index()
+    print('Database completed')
+    global fuzzy_tree
+
+    if not fuzzy_tree:
+        print('Building fuzzy search')
+        fuzzy_tree = createBKTree()
+        print('Fuzzy search completed')
+
 # homepage route
 @app.route('/', methods=['GET', 'POST'])
 def results():
@@ -33,22 +47,14 @@ def results():
     :var genre: advanced search field - optional field
     :var runTime: integer passed as the minimum runtime of the advanced search results - optional field
     """
-
-    theWhooshSearch = WhooshSearch()
-    print('Building database')
-    theWhooshSearch.index()
-    print('Database completed')
-    global fuzzy_tree
     length = 0
-    hasNext = None
+    hasNext = False
     nextPageNumber = None
-
-    if not fuzzy_tree:
-        print('Building fuzzy search')
-        fuzzy_tree = createBKTree()
-        print('Fuzzy search completed')
     fuzzy_terms = []
     r = []
+
+    theWhooshSearch = WhooshSearch()
+    theWhooshSearch.index()
 
     if request.method == 'POST':
         data = request.form
@@ -64,17 +70,31 @@ def results():
 
     if keywordQuery:
         print('Type: ' + searchType + ', keywords: ' + keywordQuery)
+        
         if searchType == 'advanced':
             actor = data.get('actor')
             production_company = data.get('production')
             director = data.get('director')
             genre = data.get('genre')
             runTime = data.get('runtime')
-            r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, page)
+            if fuzzySearch == 'True' or fuzzySearch == 'true':
+                whooshFuzzy = data.get('whoosh')
+                if whooshFuzzy == 'True' or whooshFuzzy == 'true':
+                    r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy, page)
+                else:
+                    keywordQuery = keywordQuery.split()
+                    for word in keywordQuery:
+                        fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
+                    for term in fuzzy_terms:
+                        temp, length = theWhooshSearch.advancedSearch(term[0], actor, production_company, director, genre, runTime, False, page)
+                        r += temp
+            else:
+                r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, False, page)
+        
         else:
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
-                if whooshFuzzy == 'True':
+                if whooshFuzzy == 'True' or whooshFuzzy == 'true':
                     r, length = theWhooshSearch.basicSearch(keywordQuery, whooshFuzzy, page)
                 else:
                     keywordQuery = keywordQuery.split()
@@ -82,7 +102,7 @@ def results():
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
                         temp, length = theWhooshSearch.basicSearch(term[0], False, page)
-                        results += temp
+                        r += temp
             else:
                 r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
 
@@ -105,7 +125,6 @@ def createBKTree():
 def nextPage(length, pageNumber):
     return (int(length) - int(pageNumber) * 10) > 1
 
-
 class WhooshSearch(object):
     def __init__(self):
         super(WhooshSearch, self).__init__()
@@ -113,17 +132,17 @@ class WhooshSearch(object):
     def basicSearch(self, query_entered, whooshFuzzy, pageNumber):
         returnables = []
         with self.indexer.searcher() as search:
-            if whooshFuzzy == 'True':
+            
+            if whooshFuzzy == 'True' or whooshFuzzy == 'true':
                 query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema, termclass=FuzzyTerm)
             else:
                 query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
+            
             query = query.parse(query_entered)
             results = search.search_page(query, int(pageNumber))
 
-            # return the stored attributes
             for result in results:
-                returnables.append(
-                    {'id': result['id'],
+                returnables.append({'id': result['id'],
                      'page_url': result['page_url'],
                      'image_url': result['image_url'],
                      'title': result['Title'],
@@ -135,9 +154,10 @@ class WhooshSearch(object):
                      'awards': result['Awards'],
                      'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
+            
             return returnables, len(results)
 
-    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, pageNumber):
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy, pageNumber):
         ''' provides filters to search across multiple fields based on user input
             query_entered/title is a required field, all other fields are optional
         '''
@@ -151,7 +171,12 @@ class WhooshSearch(object):
         allow_q = None
 
         with self.indexer.searcher() as search:
-            qp = qparser.QueryParser('Title', self.indexer.schema)
+            
+            if whooshFuzzy == 'True' or whooshFuzzy == 'true':
+                qp = qparser.QueryParser('Title', self.indexer.schema, termclass=FuzzyTerm)
+            else:
+                qp = qparser.QueryParser('Title', self.indexer.schema)
+            
             user_q = qp.parse(title)
 
             if Actor and Genre and Director and Production and runtime:
@@ -221,6 +246,7 @@ class WhooshSearch(object):
                 results = search.search(user_q, filter=allow_q)
             else:
                 results = search.search_page(user_q, int(pageNumber))
+            
             for result in results:
                 returnables.append(
                     {'id': result['id'],
@@ -235,6 +261,7 @@ class WhooshSearch(object):
                      'awards': result['Awards'],
                      'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
+            
             return returnables, len(results)
 
     def index(self):
@@ -242,7 +269,7 @@ class WhooshSearch(object):
                 Only indexes if a database does not already exist
                 All fields of extracted data are indexed for the advanced search
                 """
-        # set up to only index once
+
         schema = Schema(id=ID(stored=True),
                         image_url=TEXT(stored=True),
                         page_url=TEXT(stored=True),
@@ -289,9 +316,9 @@ class WhooshSearch(object):
         else:
             self.indexer = open_dir('indexdir')
 
-
 if __name__ == '__main__':
     global theWhooshSearch
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
+    app.before_first_request(before_first_request)
     app.run(debug=True)
