@@ -11,7 +11,7 @@ from whoosh.qparser import QueryParser, MultifieldParser, query
 from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 import pandas as pd
-from fuzzy_search.BKTree import BKTree
+from .fuzzy_search.BKTree import BKTree
 
 app = Flask(__name__,
             template_folder='./frontend/src')
@@ -32,7 +32,7 @@ def before_first_request_func():
 
     if not fuzzy_tree:
         print('Building fuzzy search')
-        fuzzy_tree = createBKTree()
+        fuzzy_tree = BKTree(decode_file_path='fuzzy_search/encoded_tree.csv')
         print('Fuzzy search completed')
 
 # homepage route
@@ -114,18 +114,9 @@ def results():
     returnResults = {'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
     return jsonify(returnResults)
 
-def createBKTree():
-    vocab = []
-    with open('database/vocabulary.csv', encoding='utf-8', newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        for line in reader:
-            vocab.append(line[0])
-
-    return BKTree(vocab, 0)
-
 def nextPage(length, pageNumber):
     return (int(length) - int(pageNumber) * 10) > 1
-
+    
 class WhooshSearch(object):
     def __init__(self):
         super(WhooshSearch, self).__init__()
@@ -325,4 +316,4 @@ if __name__ == '__main__':
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
     app.before_first_request(before_first_request_func)
-    app.run(debug=True)
+    app.run(debug=False)

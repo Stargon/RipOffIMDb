@@ -1,6 +1,5 @@
-from BKTree_Node import BKTreeNode
+from .BKTree_Node import BKTreeNode
 import csv
-
 
 class BKTree(object):
     def __init__(self, vocabulary=None, root_index=0, decode_file_path=''):
@@ -118,4 +117,3 @@ class BKTree(object):
                 # make new node
                 current_node = BKTreeNode(element)
         return stack.pop()
-
