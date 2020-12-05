@@ -67,3 +67,6 @@ cd frontend
 # Execute the frontend
 npm start
 ```
+
+The frontend can also be accessed through [http://localhost:3000](http://localhost:3000) 
+once it has been started through npm.
