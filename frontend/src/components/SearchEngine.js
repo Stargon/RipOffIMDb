@@ -32,19 +32,20 @@ export default class SearchEngine extends React.Component {
       isLoaded: true,
       changedFuzzy: false,
       isPage: false,
-      nextPage: 0,
+      nextPage: 1,
       prevPage: 0,
       process: false,
     };
-    this.resetState = this.state;
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
+    this.fetchQuery = this.fetchQuery.bind(this)
     this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
     this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
     this.isAdvancedUpdate = this.isAdvancedUpdate.bind(this);
+    this.fetchAdvanced = this.fetchAdvanced.bind(this)
     this.handleFuzzyUpdate = this.handleFuzzyUpdate.bind(this);
   }
 
@@ -62,28 +63,27 @@ export default class SearchEngine extends React.Component {
     this.setState({ changedFuzzy: true });
   };
 
-  handleQueryUpdate = async (update) => {
+  handleQueryUpdate = async(update) => {
+    // Make sure nextPage is set before continueing
+    await new Promise(accept => this.setState({nextPage: 1}, accept))
+    await this.fetchQuery(update)
+  }
+
+  fetchQuery = async (update) => {
     // Set default state for new query in update while loading
-    this.setState({ isLoaded: false, error: null });
     if (
       update !== "" &&
       update !== undefined &&
       (this.state.query !== update || this.state.changedFuzzy === true)
     ) {
       // Updated query is different than current query, begin fetching data
-      this.setState({ query: update, process: true });
+      this.setState({ isLoaded: false, error: null });
 
       // Format simple request string, and fetch results (check for fuzzy first)
-      let request = "";
-      if (this.state.isFuzzy === true && this.state.toWhoosh === true) {
-        // Fuzzy search with Whoosh default fuzzy
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=true&pageNumber=1`;
-      } else if (this.state.isFuzzy === true && this.state.toWhoosh === false) {
-        // Fuzzy search with custom BK Tree implementation
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&fuzzySearch=true&whoosh=false&pageNumber=1`;
-      } else {
-        // No fuzzy search
-        request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&pageNumber=1`;
+      let request = `${serverEndpoint}?searchType=basic&keywordQuery=${update}&pageNumber=${this.state.nextPage}`;
+      if (this.state.isFuzzy === true) {
+        // Fuzzy is given, give the proper filters
+        request += `&fuzzySearch=${this.state.isFuzzy}&whoosh=${this.state.toWhoosh}`;
       }
       await fetch(request)
         .then((res) => res.json())
@@ -91,6 +91,8 @@ export default class SearchEngine extends React.Component {
           (response) => {
             // Response received, save results
             this.setState({
+              query: update,
+              advanced: "",
               isLoaded: true,
               results: response.results,
               changedFuzzy: false,
@@ -106,9 +108,11 @@ export default class SearchEngine extends React.Component {
               error: err,
               isLoaded: true,
               results: [],
+              advanced: "",
               changedFuzzy: false,
               process: false,
               isPage: false,
+              nextPage:1
             });
           }
         );
@@ -120,13 +124,22 @@ export default class SearchEngine extends React.Component {
       this.setState({
         isLoaded: true,
         query: "",
+        advanced: "",
         results: [],
         changedFuzzy: false,
+        nextPage: 1,
+        isPage: false
       });
     }
   };
 
   handleAdvancedUpdate = async (update) => {
+    // Make sure nextPage is set before continueing
+    await new Promise(accept => this.setState({nextPage: 1}, accept))
+    await this.fetchAdvanced(update)
+  }
+  
+  fetchAdvanced = async (update) => {
     if (update === "") return;
     if (
       update !== "" &&
@@ -144,7 +157,7 @@ export default class SearchEngine extends React.Component {
       // Advanced search will not filter on BK Tree, and will return results from not filtered results
       if (this.state.isFuzzy === true) {
         // Fuzzy is given, give the proper filters
-        request += `fuzzySearch=${this.state.isFuzzy}&${this.state.toWhoosh}`;
+        request += `&fuzzySearch=${this.state.isFuzzy}&whoosh=${this.state.toWhoosh}`;
       }
       alert(request);
       await new Promise((accept) =>
@@ -173,13 +186,14 @@ export default class SearchEngine extends React.Component {
               isLoaded: true,
               results: [],
               isPage: false,
+              nextPage: 1,
             });
           }
         );
     } else if (this.isAdvancedUpdate(update)) {
       this.setState({ isLoaded: true });
     } else {
-      this.setState({ isLoaded: true, advanced: "" });
+      this.setState({ isLoaded: true, advanced: "", isPage: false, nextPage: 1, });
     }
     this.setState({ changedFuzzy: false });
   };
