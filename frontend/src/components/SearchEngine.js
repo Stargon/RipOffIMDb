@@ -1,3 +1,5 @@
+/* There is a lot of logic, will need to refactor and break out later */
+
 import React from "react";
 import Card from "@material-ui/core/Card";
 import CardActions from "@material-ui/core/CardActions";
@@ -12,6 +14,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Box from "@material-ui/core/Box";
 import Fab from "@material-ui/core/Fab";
+import NavigateBeforeIcon from "@material-ui/icons/NavigateBefore";
+import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 
 // Figure out fallback image later
 import FALLBACK_IMAGE from "../images/temp_fallback.png";
@@ -32,21 +36,23 @@ export default class SearchEngine extends React.Component {
       isLoaded: true,
       changedFuzzy: false,
       isPage: false,
-      nextPage: 1,
+      nextPage: null,
       prevPage: 0,
       process: false,
     };
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
-    this.fetchQuery = this.fetchQuery.bind(this)
+    this.fetchQuery = this.fetchQuery.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
     this.handleViewClick = this.handleViewClick.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.renderSearch = this.renderSearch.bind(this);
     this.handleAdvancedUpdate = this.handleAdvancedUpdate.bind(this);
     this.isAdvancedUpdate = this.isAdvancedUpdate.bind(this);
-    this.fetchAdvanced = this.fetchAdvanced.bind(this)
+    this.fetchAdvanced = this.fetchAdvanced.bind(this);
     this.handleFuzzyUpdate = this.handleFuzzyUpdate.bind(this);
+    this.handleNextPage = this.handleNextPage.bind(this);
+    this.handlePrevPage = this.handlePrevPage.bind(this);
   }
 
   handleFuzzyUpdate = (fuzzyUpdate) => {
@@ -63,18 +69,20 @@ export default class SearchEngine extends React.Component {
     this.setState({ changedFuzzy: true });
   };
 
-  handleQueryUpdate = async(update) => {
+  handleQueryUpdate = async (update) => {
     // Make sure nextPage is set before continueing
-    await new Promise(accept => this.setState({nextPage: 1}, accept))
-    await this.fetchQuery(update)
-  }
+    await new Promise((accept) => this.setState({ nextPage: 1 }, accept));
+    await this.fetchQuery(update, 1);
+  };
 
-  fetchQuery = async (update) => {
+  fetchQuery = async (update, pageNumber) => {
     // Set default state for new query in update while loading
     if (
       update !== "" &&
       update !== undefined &&
-      (this.state.query !== update || this.state.changedFuzzy === true)
+      (this.state.query !== update ||
+        this.state.changedFuzzy === true ||
+        pageNumber !== this.state.nextPage)
     ) {
       // Updated query is different than current query, begin fetching data
       this.setState({ isLoaded: false, error: null });
@@ -96,7 +104,6 @@ export default class SearchEngine extends React.Component {
               isLoaded: true,
               results: response.results,
               changedFuzzy: false,
-              isPage: response.isPage,
               nextPage: response.nextPage,
               prevPage: response.prevPage,
               process: false,
@@ -111,8 +118,7 @@ export default class SearchEngine extends React.Component {
               advanced: "",
               changedFuzzy: false,
               process: false,
-              isPage: false,
-              nextPage:1
+              nextPage: null,
             });
           }
         );
@@ -127,24 +133,25 @@ export default class SearchEngine extends React.Component {
         advanced: "",
         results: [],
         changedFuzzy: false,
-        nextPage: 1,
-        isPage: false
+        nextPage: null,
       });
     }
   };
 
   handleAdvancedUpdate = async (update) => {
     // Make sure nextPage is set before continueing
-    await new Promise(accept => this.setState({nextPage: 1}, accept))
-    await this.fetchAdvanced(update)
-  }
-  
-  fetchAdvanced = async (update) => {
+    await new Promise((accept) => this.setState({ nextPage: 1 }, accept));
+    await this.fetchAdvanced(update, 1);
+  };
+
+  fetchAdvanced = async (update, pageNumber) => {
     if (update === "") return;
     if (
       update !== "" &&
       update !== undefined &&
-      (!this.isAdvancedUpdate(update) || this.state.changedFuzzy === true)
+      (!this.isAdvancedUpdate(update) ||
+        this.state.changedFuzzy === true ||
+        pageNumber !== this.state.nextPage)
     ) {
       let { query, actor, production, director, genre, runtime } = update;
       let request = "";
@@ -159,7 +166,6 @@ export default class SearchEngine extends React.Component {
         // Fuzzy is given, give the proper filters
         request += `&fuzzySearch=${this.state.isFuzzy}&whoosh=${this.state.toWhoosh}`;
       }
-      alert(request);
       await new Promise((accept) =>
         this.setState(
           { isLoaded: false, error: null, advanced: update },
@@ -174,7 +180,6 @@ export default class SearchEngine extends React.Component {
             this.setState({
               isLoaded: true,
               results: response.results,
-              isPage: response.isPage,
               nextPage: response.nextPage,
               prevPage: response.prevPage,
             });
@@ -185,15 +190,14 @@ export default class SearchEngine extends React.Component {
               error: err,
               isLoaded: true,
               results: [],
-              isPage: false,
-              nextPage: 1,
+              nextPage: null,
             });
           }
         );
     } else if (this.isAdvancedUpdate(update)) {
       this.setState({ isLoaded: true });
     } else {
-      this.setState({ isLoaded: true, advanced: "", isPage: false, nextPage: 1, });
+      this.setState({ isLoaded: true, advanced: "", nextPage: null });
     }
     this.setState({ changedFuzzy: false });
   };
@@ -208,6 +212,26 @@ export default class SearchEngine extends React.Component {
 
   handleImageError = (event) => {
     event.target.src = FALLBACK_IMAGE;
+  };
+
+  handleNextPage = async () => {
+    // Increment pages (compare to old page)
+    const oldNext = this.state.nextPage - 1;
+    if (this.state.advanced === "") {
+      await this.fetchQuery(this.state.query, oldNext);
+    } else {
+      await this.fetchAdvanced(this.state.query, oldNext);
+    }
+  };
+
+  handlePrevPage = async () => {
+    // Decrement pages (compare to newer page)
+    const oldPrev = this.state.prevPage + 1;
+    if (this.state.advanced === "") {
+      await this.fetchQuery(this.state.query, oldPrev);
+    } else {
+      await this.fetchAdvanced(this.state.query, oldPrev);
+    }
   };
 
   renderSearch = (classes) => {
@@ -363,11 +387,43 @@ export default class SearchEngine extends React.Component {
     }
     let prevButton = null;
     let nextButton = null;
-    if (this.state.isPage === true) {
-      if (this.state.prevPage !== 0) {
-        prevButton = <Fab color="primary"></Fab>;
-      }
+    if (this.state.prevPage !== 0) {
+      prevButton = (
+        <Fab
+          color="secondary"
+          style={{
+            margin: 0,
+            top: "auto",
+            right: "auto",
+            bottom: 20,
+            left: 20,
+            position: "fixed",
+          }}
+          onClick={this.handlePrevPage}
+        >
+          <NavigateBeforeIcon />
+        </Fab>
+      );
     }
+    if (this.state.nextPage !== null) {
+      nextButton = (
+        <Fab
+          color="primary"
+          style={{
+            margin: 0,
+            top: "auto",
+            right: 20,
+            bottom: 20,
+            left: "auto",
+            position: "fixed",
+          }}
+          onClick={this.handleNextPage}
+        >
+          <NavigateNextIcon />
+        </Fab>
+      );
+    }
+
     // Render the app
     return (
       <React.Fragment>
@@ -381,6 +437,8 @@ export default class SearchEngine extends React.Component {
           </Grid>
           {searchResults}
         </Grid>
+        {prevButton}
+        {nextButton}
       </React.Fragment>
     );
   }
