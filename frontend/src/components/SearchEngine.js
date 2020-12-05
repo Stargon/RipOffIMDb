@@ -156,9 +156,9 @@ export default class SearchEngine extends React.Component {
       let { query, actor, production, director, genre, runtime } = update;
       let request = "";
       if (runtime[0] === 0 && runtime[1] === 0) {
-        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&pageNumber=1`;
+        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&pageNumber=${this.state.nextPage}`;
       } else {
-        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&pageNumber=1`;
+        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&pageNumber=${this.state.nextPage}`;
       }
       /* CURRENT BUG */
       // Advanced search will not filter on BK Tree, and will return results from not filtered results
@@ -220,7 +220,7 @@ export default class SearchEngine extends React.Component {
     if (this.state.advanced === "") {
       await this.fetchQuery(this.state.query, oldNext);
     } else {
-      await this.fetchAdvanced(this.state.query, oldNext);
+      await this.fetchAdvanced(this.state.advanced, oldNext);
     }
   };
 
@@ -230,7 +230,7 @@ export default class SearchEngine extends React.Component {
     if (this.state.advanced === "") {
       await this.fetchQuery(this.state.query, oldPrev);
     } else {
-      await this.fetchAdvanced(this.state.query, oldPrev);
+      await this.fetchAdvanced(this.state.advanced, oldPrev);
     }
   };
 
