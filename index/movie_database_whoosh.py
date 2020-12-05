@@ -320,5 +320,5 @@ if __name__ == '__main__':
     global theWhooshSearch
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
-    app.before_first_request(before_first_request)
+    app.before_first_request(before_first_request_func)
     app.run(debug=True)
