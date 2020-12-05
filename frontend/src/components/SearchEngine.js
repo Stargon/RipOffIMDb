@@ -16,6 +16,8 @@ import Box from "@material-ui/core/Box";
 import Fab from "@material-ui/core/Fab";
 import NavigateBeforeIcon from "@material-ui/icons/NavigateBefore";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
+import { Alert } from "@material-ui/lab";
+import LinearProgress from "@material-ui/core/LinearProgress";
 
 // Figure out fallback image later
 import FALLBACK_IMAGE from "../images/temp_fallback.png";
@@ -239,13 +241,6 @@ export default class SearchEngine extends React.Component {
       // Results do not exist (maybe in a middle of a promise/state change),
       // do not render
       return null;
-    } else if (this.state.results.length === 0 && this.state.query !== "") {
-      // No results were found for a specific query
-      return (
-        <Grid item xs={12}>
-          <Typography>No results were found!</Typography>
-        </Grid>
-      );
     }
     // Render all the items from the fetch results
     return (
@@ -364,27 +359,38 @@ export default class SearchEngine extends React.Component {
     const update = this.state.query;
     const classes = makeStyles();
     const { error, isLoaded, results } = this.state;
-    let searchResults = null;
+
+    // Fancy error hanadling
+    let loadOrErrorPrompt = null;
     if (error) {
       // Error in communicating with the server, render the error message
-      searchResults = (
-        <Grid item xs={12}>
-          <Typography inline variant="body1" align="center">
-            Error: {error.message}
-          </Typography>
-        </Grid>
+      loadOrErrorPrompt = (
+        <Alert variant="filled" severity="error">
+          Error found! — <strong>{error.message}</strong>
+        </Alert>
       );
     } else if (!isLoaded) {
       // Let user know the webpage is loading
-      searchResults = (
-        <Grid item xs={12}>
-          <div>Loading...</div>
+      loadOrErrorPrompt = (
+        <Grid styles={{ justifyContent: "center" }} align="center">
+          <LinearProgress color="secondary" />
         </Grid>
       );
-    } else if ((update !== "" && update !== undefined) || results.length >= 0) {
+    } else if (this.state.results.length === 0 && this.state.query !== "") {
+      // No results were found for a specific query
+      loadOrErrorPrompt = (
+        <Alert severity="warning">No results found!</Alert>
+      );
+    }
+
+    // Render results if able
+    let searchResults = null;
+    if ((update !== "" && update !== undefined) || results.length >= 0) {
       // Conditionally render the results
       searchResults = this.renderSearch(classes);
     }
+
+    // Render pagination if able
     let prevButton = null;
     let nextButton = null;
     if (this.state.prevPage !== 0) {
@@ -434,6 +440,7 @@ export default class SearchEngine extends React.Component {
               fuzzy={this.handleFuzzyUpdate}
               advanced={this.handleAdvancedUpdate}
             ></TextBar>
+            {loadOrErrorPrompt}
           </Grid>
           {searchResults}
         </Grid>
