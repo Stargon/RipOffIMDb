@@ -12,8 +12,6 @@ import FindReplaceIcon from "@material-ui/icons/FindReplace";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import FormLabel from "@material-ui/core/FormLabel";
 
 const genresList = [
   "",
@@ -76,11 +74,11 @@ export default class TextBar extends React.Component {
 
   // Event handler to return the query
   onRequestSearchEvent(query) {
-    let resetState = this.cleanState
-    resetState.fuzzy = this.state.fuzzy
+    let resetState = this.cleanState;
+    resetState.fuzzy = this.state.fuzzy;
     this.setState(resetState);
     this.props.query(query);
-    this.props.advanced("")
+    this.props.advanced("");
     this.setState({ query: query });
   }
 
@@ -206,7 +204,10 @@ export default class TextBar extends React.Component {
               aria-labelledby="range-slider"
               getAriaValueText={this.valuetext}
               color="secondary"
-              max ={500}
+              max={500}
+              valueLabelFormat={(value) => (
+                <div>{value === 0 ? "None" : value}</div>
+              )}
             />
           </Box>
           <Box p={1} m={1} pl={2} flexShrink={0}>
