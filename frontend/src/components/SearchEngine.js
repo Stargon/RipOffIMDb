@@ -228,7 +228,11 @@ export default class SearchEngine extends React.Component {
 
   handlePrevPage = async () => {
     // Decrement pages (compare to newer page)
+    // Need to set newPage to prePage as the query reads newPage
     const oldPrev = this.state.prevPage + 1;
+    await new Promise((accept) =>
+      this.setState({ nextPage: this.state.prevPage }, accept)
+    );
     if (this.state.advanced === "") {
       await this.fetchQuery(this.state.query, oldPrev);
     } else {
@@ -378,9 +382,7 @@ export default class SearchEngine extends React.Component {
       );
     } else if (this.state.results.length === 0 && this.state.query !== "") {
       // No results were found for a specific query
-      loadOrErrorPrompt = (
-        <Alert severity="warning">No results found!</Alert>
-      );
+      loadOrErrorPrompt = <Alert severity="warning">No results found!</Alert>;
     }
 
     // Render results if able
@@ -393,7 +395,7 @@ export default class SearchEngine extends React.Component {
     // Render pagination if able
     let prevButton = null;
     let nextButton = null;
-    if (this.state.prevPage !== 0) {
+    if (this.state.prevPage > 0 && this.state.results.length > 0) {
       prevButton = (
         <Fab
           color="secondary"
@@ -411,7 +413,7 @@ export default class SearchEngine extends React.Component {
         </Fab>
       );
     }
-    if (this.state.nextPage !== null) {
+    if (this.state.nextPage !== null && this.state.results.length > 0) {
       nextButton = (
         <Fab
           color="primary"
