@@ -15,33 +15,33 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 const genresList = [
   "",
-  "Drama",
-  "Biography",
-  "Crime",
-  "History",
-  "Thriller",
-  "Comedy",
   "Action",
-  "Adventure",
-  "Sci-Fi",
-  "Horror",
-  "Mystery",
-  "Romance",
-  "Documentary",
-  "Family",
   "Adult",
-  "War",
-  "Short",
-  "Western",
-  "Sport",
+  "Adventure",
   "Animation",
+  "Biography",
+  "Comedy",
+  "Crime",
+  "Documentary",
+  "Drama",
+  "Family",
   "Fantasy",
-  "Musical",
-  "Music",
-  "Reality-TV",
-  "News",
   "Game-Show",
+  "History",
+  "Horror",
+  "Music",
+  "Musical",
+  "Mystery",
+  "News",
+  "Reality-TV",
+  "Romance",
+  "Sci-Fi",
+  "Short",
+  "Sport",
   "Talk-Show",
+  "Thriller",
+  "War",
+  "Western",
 ];
 
 export default class TextBar extends React.Component {
@@ -190,7 +190,7 @@ export default class TextBar extends React.Component {
               ))}
             </TextField>
           </Box>
-          <Box flexGrow={1}>
+          <Box pl={2} flexGrow={1}>
             <Typography id="range-slider" gutterBottom>
               Runtime
             </Typography>
