@@ -53,7 +53,7 @@ export default class TextBar extends React.Component {
       production: "",
       director: "",
       genre: "",
-      runtime: [0, 330],
+      runtime: [0, 0],
       fuzzy: "",
     };
     this.cleanState = this.state;
