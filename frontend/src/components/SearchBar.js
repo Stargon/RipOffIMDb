@@ -51,6 +51,7 @@ export default class TextBar extends React.Component {
     super(props);
     this.state = {
       actor: "",
+      advanced: "",
       production: "",
       director: "",
       genre: "",
@@ -79,7 +80,7 @@ export default class TextBar extends React.Component {
     resetState.fuzzy = this.state.fuzzy
     this.setState(resetState);
     this.props.query(query);
-    this.props.advanced("");
+    this.props.advanced("")
     this.setState({ query: query });
   }
 

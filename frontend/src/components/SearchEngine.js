@@ -32,6 +32,7 @@ export default class SearchEngine extends React.Component {
       isPage: false,
       nextPage: 0,
       prevPage: 0,
+      process: false
     };
     this.resetState = this.state;
     // Bind functions to this class
@@ -68,7 +69,7 @@ export default class SearchEngine extends React.Component {
       (this.state.query !== update || this.state.changedFuzzy === true)
     ) {
       // Updated query is different than current query, begin fetching data
-      this.setState({ query: update });
+      this.setState({ query: update, process: true});
 
       // Format simple request string, and fetch results (check for fuzzy first)
       let request = "";
@@ -94,6 +95,7 @@ export default class SearchEngine extends React.Component {
               isPage: response.isPage,
               nextPage: response.nextPage,
               prevPage: response.prevPage,
+              process: false
             });
           },
           (err) => {
@@ -103,13 +105,15 @@ export default class SearchEngine extends React.Component {
               isLoaded: true,
               results: [],
               changedFuzzy: false,
+              process: false,
+              isPage: false
             });
           }
         );
     } else if (this.state.query === update) {
       // update is not different than current query, do not clear page
-      this.setState({ isLoaded: true, changedFuzzy: false });
-    } else {
+      this.setState({ isLoaded: true});
+    } else if(update === undefined || update === "") {
       // no input given, clear page
       this.setState({
         isLoaded: true,
@@ -121,13 +125,12 @@ export default class SearchEngine extends React.Component {
   };
 
   handleAdvancedUpdate = async (update) => {
-    if (this.state.advanced === "") return;
+    if (update === "") return;
     if (
       update !== "" &&
       update !== undefined &&
       (!this.isAdvancedUpdate(update) || this.state.changedFuzzy === true)
     ) {
-      this.setState({ advanced: update });
       let { query, actor, production, director, genre, runtime } = update;
       let request = "";
       /* CURRENT BUG */
@@ -143,18 +146,18 @@ export default class SearchEngine extends React.Component {
         request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&pageNumber=1`;
       }
       await new Promise((accept) =>
-        this.setState({ isLoaded: false, error: null }, accept)
+        this.setState({ isLoaded: false, error: null, advanced: update}, accept)
       );
       await fetch(request)
         .then((res) => res.json())
         .then(
           (response) => {
             // Response received, save results
-            this.setState({ isLoaded: true, results: response });
+            this.setState({ isLoaded: true, results: response.results, isPage: response.isPage, nextPage: response.nextPage, prevPage: response.prevPage });
           },
           (err) => {
             // Error in communicating to the server
-            this.setState({ error: err, isLoaded: true, results: [] });
+            this.setState({ error: err, isLoaded: true, results: [], isPage: false });
           }
         );
     } else if (this.isAdvancedUpdate(update)) {
@@ -317,7 +320,7 @@ export default class SearchEngine extends React.Component {
           </Typography>
         </Grid>
       );
-    } else if (!isLoaded && this.state.results.length === 0) {
+    } else if (!isLoaded) {
       // Let user know the webpage is loading
       searchResults = (
         <Grid item xs={12}>
