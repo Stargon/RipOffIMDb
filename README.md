@@ -13,7 +13,7 @@ codebase in two separate processes at the same time. Instructions below assumes
 two separate terminal windows are used.
 ### Frontend
 
-[<img src="https://img.shields.io/badge/python%20-%2314354C.svg?&style=for-the-badge&logo=python&logoColor=white"/>](https://www.python.org/) [<img src="https://img.shields.io/badge/flask%20-%23000.svg?&style=for-the-badge&logo=flask&logoColor=white"/>](https://flask.palletsprojects.com/en/1.1.x/)
+[<img src="https://img.shields.io/badge/python%20-%2314354C.svg?&style=for-the-badge&logo=python&logoColor=white"/>](https://www.python.org/) [<img src="https://img.shields.io/badge/flask%20-%23000.svg?&style=for-the-badge&logo=flask&logoColor=white"/>](https://flask.palletsprojects.com/en/1.1.x/) [<img src="https://img.shields.io/badge/pandas%20-%23150458.svg?&style=for-the-badge&logo=pandas&logoColor=white"/>](https://pandas.pydata.org/)
 
 #### Dependencies
 
@@ -42,7 +42,7 @@ python3 movie_database_whoosh.py
 
 ### Backend
 
-[<img href="python.org" src="https://img.shields.io/badge/react%20-%2320232a.svg?&style=for-the-badge&logo=react&logoColor=%2361DAFB"/>](https://reactjs.org/) [<img src="https://img.shields.io/badge/material%20ui%20-%230081CB.svg?&style=for-the-badge&logo=material-ui&logoColor=white"/>](https://material-ui.com/)
+[<img src="https://img.shields.io/badge/javascript%20-%23323330.svg?&style=for-the-badge&logo=javascript&logoColor=%23F7DF1E"/>](https://www.javascript.com/) [<img src="https://img.shields.io/badge/react%20-%2320232a.svg?&style=for-the-badge&logo=react&logoColor=%2361DAFB"/>](https://reactjs.org/) [<img src="https://img.shields.io/badge/material%20ui%20-%230081CB.svg?&style=for-the-badge&logo=material-ui&logoColor=white"/>](https://material-ui.com/)
 
 #### Dependencies
 
