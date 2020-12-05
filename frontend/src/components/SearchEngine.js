@@ -29,7 +29,9 @@ export default class SearchEngine extends React.Component {
       error: null,
       isLoaded: true,
       changedFuzzy: false,
+      process: false,
     };
+    this.resetState = this.state;
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
     this.makeStyles = this.makeStyles.bind(this);
@@ -57,7 +59,9 @@ export default class SearchEngine extends React.Component {
 
   handleQueryUpdate = async (update) => {
     // Set default state for new query in update while loading
-    this.setState({ isLoaded: false, error: null });
+    await new Promise((accept) =>
+      this.setState({ isLoaded: false, error: null, process: true }, accept)
+    );
     if (
       update !== "" &&
       update !== undefined &&
@@ -83,65 +87,86 @@ export default class SearchEngine extends React.Component {
         .then(
           (response) => {
             // Response received, save results
-            this.setState({ isLoaded: true, results: response });
+            this.setState({
+              isLoaded: true,
+              results: response,
+              changedFuzzy: false,
+              process: false,
+            });
           },
           (err) => {
             // Error in communicating to the server
-            this.setState({ error: err, isLoaded: true, results: null });
+            this.setState({
+              error: err,
+              isLoaded: true,
+              results: null,
+              changedFuzzy: false,
+              process: false,
+            });
           }
         );
     } else if (this.state.query === update) {
       // update is not different than current query, do not clear page
-      this.setState({ isLoaded: true });
+      this.setState({ isLoaded: true, changedFuzzy: false, process: false });
     } else {
       // no input given, clear page
-      this.setState({ isLoaded: true, query: "", results: [] });
+      this.setState({
+        isLoaded: true,
+        query: "",
+        results: [],
+        changedFuzzy: false,
+        process: false,
+      });
     }
-    this.setState({ changedFuzzy: false });
   };
 
   handleAdvancedUpdate = async (update) => {
-    this.setState({ isLoaded: false, error: null });
-    if (
-      update !== "" &&
-      update !== undefined &&
-      (!this.isAdvancedUpdate(update) || this.state.changedFuzzy === true)
-    ) {
-      this.setState({ advanced: update });
-      let { query, actor, production, director, genre, runtime } = update;
-      let request = "";
-      /* CURRENT BUG */
-      // Advanced search will not filter on BK Tree, and will return results from not filtered results
-      if (this.state.isFuzzy === true && this.state.toWhoosh === true) {
-        // Fuzzy search with Whoosh default fuzzy
-        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&fuzzySearch=true&whoosh=true`;
-      } else if (this.state.isFuzzy === true && this.state.toWhoosh === false) {
-        // Fuzzy search with custom BK Tree implementation
-        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&fuzzySearch=true&whoosh=false`;
-      } else {
-        // No fuzzy search
-        request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}`;
-      }
-      console.log(request);
-      this.setState({ isLoaded: true });
-      await fetch(request)
-        .then((res) => res.json())
-        .then(
-          (response) => {
-            // Response received, save results
-            this.setState({ isLoaded: true, results: response });
-          },
-          (err) => {
-            // Error in communicating to the server
-            this.setState({ error: err, isLoaded: true, results: null });
-          }
+    if (this.process === true) {
+      if (
+        update !== "" &&
+        update !== undefined &&
+        (!this.isAdvancedUpdate(update) || this.state.changedFuzzy === true)
+      ) {
+        this.setState({ advanced: update });
+        let { query, actor, production, director, genre, runtime } = update;
+        let request = "";
+        /* CURRENT BUG */
+        // Advanced search will not filter on BK Tree, and will return results from not filtered results
+        if (this.state.isFuzzy === true && this.state.toWhoosh === true) {
+          // Fuzzy search with Whoosh default fuzzy
+          request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&fuzzySearch=true&whoosh=true`;
+        } else if (
+          this.state.isFuzzy === true &&
+          this.state.toWhoosh === false
+        ) {
+          // Fuzzy search with custom BK Tree implementation
+          request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&fuzzySearch=true&whoosh=false`;
+        } else {
+          // No fuzzy search
+          request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}`;
+        }
+        await new Promise((accept) =>
+          this.setState({ isLoaded: false, error: null }, accept)
         );
-    } else if (this.isAdvancedUpdate(update)) {
-      this.setState({ isLoaded: true });
-    } else {
-      this.setState({ isLoaded: true, advanced: "" });
+        await fetch(request)
+          .then((res) => res.json())
+          .then(
+            (response) => {
+              // Response received, save results
+              this.setState({ isLoaded: true, results: response });
+            },
+            (err) => {
+              // Error in communicating to the server
+              this.setState({ error: err, isLoaded: true, results: null });
+            }
+          );
+      } else if (this.isAdvancedUpdate(update)) {
+        this.setState({ isLoaded: true });
+      } else {
+        this.setState({ isLoaded: true, advanced: "" });
+      }
+      this.setState({ changedFuzzy: false });
     }
-    this.setState({ changedFuzzy: false });
   };
 
   isAdvancedUpdate = (tags) => {
@@ -287,7 +312,6 @@ export default class SearchEngine extends React.Component {
     const classes = makeStyles();
     const { error, isLoaded, results } = this.state;
     let searchResults = null;
-
     if (error) {
       // Error in communicating with the server, render the error message
       searchResults = (
@@ -297,7 +321,7 @@ export default class SearchEngine extends React.Component {
           </Typography>
         </Grid>
       );
-    } else if (!isLoaded) {
+    } else if (!isLoaded && this.state.results.length === 0) {
       // Let user know the webpage is loading
       searchResults = (
         <Grid item xs={12}>
