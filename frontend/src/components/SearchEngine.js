@@ -99,7 +99,7 @@ export default class SearchEngine extends React.Component {
             this.setState({
               error: err,
               isLoaded: true,
-              results: null,
+              results: [],
               changedFuzzy: false,
               process: false,
             });
@@ -157,7 +157,7 @@ export default class SearchEngine extends React.Component {
             },
             (err) => {
               // Error in communicating to the server
-              this.setState({ error: err, isLoaded: true, results: null });
+              this.setState({ error: err, isLoaded: true, results: [] });
             }
           );
       } else if (this.isAdvancedUpdate(update)) {
