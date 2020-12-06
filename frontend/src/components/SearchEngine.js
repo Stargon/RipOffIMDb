@@ -531,10 +531,8 @@ export default class SearchEngine extends React.Component {
           fuzzy={this.handleFuzzyUpdate}
           advanced={this.handleAdvancedUpdate}
         ></TextBar>
+        {loadOrErrorPrompt}
         <Grid container spacing={3} style={{ width: "100%" }}>
-          <Grid item xs={12}>
-            {loadOrErrorPrompt}
-          </Grid>
           {searchResults}
         </Grid>
         {prevButton}
