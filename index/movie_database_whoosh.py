@@ -11,7 +11,7 @@ from whoosh.qparser import QueryParser, MultifieldParser, query
 from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 import pandas as pd
-from .fuzzy_search.BKTree import BKTree
+from fuzzy_search.BKTree import BKTree
 
 app = Flask(__name__,
             template_folder='./frontend/src')
