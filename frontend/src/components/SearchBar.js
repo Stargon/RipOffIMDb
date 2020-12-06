@@ -92,9 +92,9 @@ export default class TextBar extends React.Component {
     }
   };
 
-  handleAdvancedUpdateChanges = () => {
+  handleAdvancedUpdateChanges = (query) => {
     let tags = {
-      query: this.state.query,
+      query: query,
       actor: this.state.actor.toLowerCase(),
       production: this.state.production.toLowerCase(),
       director: this.state.director.toLowerCase(),
@@ -102,7 +102,7 @@ export default class TextBar extends React.Component {
       runtime: this.state.runtime,
     };
     this.props.advanced(tags);
-    this.setState({ advanced: tags });
+    this.setState({ query: query, advanced: tags });
   };
 
   handleActorChange(event) {
@@ -214,7 +214,7 @@ export default class TextBar extends React.Component {
               variant="contained"
               size="small"
               color="secondary"
-              onClick={this.handleAdvancedUpdateChanges}
+              onClick={() => this.handleAdvancedUpdateChanges(this.state.value)}
               disableElevation
             >
               <FindReplaceIcon size="small" />
