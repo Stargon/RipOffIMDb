@@ -18,8 +18,7 @@ import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import { Alert } from "@material-ui/lab";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
-// Figure out fallback image later
-import FALLBACK_IMAGE from "../images/temp_fallback.png";
+import FALLBACK_IMAGE from "../images/ImageUnavailable.png";
 
 const serverEndpoint = "http://localhost:5000/";
 
@@ -146,7 +145,7 @@ export default class SearchEngine extends React.Component {
   };
 
   fetchAdvanced = async (update, pageNumber) => {
-    // Atm, basic query also modifies advanced prop, so there is a race 
+    // Atm, basic query also modifies advanced prop, so there is a race
     // condition on resetting thte lading page. If able to, refactor to
     // on SearchEngine to prevent it from happening
     if (update === "") return;
@@ -161,7 +160,7 @@ export default class SearchEngine extends React.Component {
       // Create request based on tags
       let request = "";
       if (runtime[0] === 0 && runtime[1] === 0) {
-        // Current feature of the backend: there's a difference between requesting a range of 
+        // Current feature of the backend: there's a difference between requesting a range of
         // runtime and query with no runtime. A hack involved
         request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&pageNumber=${this.state.nextPage}`;
       } else {
@@ -373,7 +372,7 @@ export default class SearchEngine extends React.Component {
                             </Box>
                           </Typography>
                           {
-                            // Render Critics (needs work)
+                            // Render Critics 
                           }
                           <Typography>
                             <Box display="flex" flexDirection="row" m={0.5}>
@@ -383,9 +382,13 @@ export default class SearchEngine extends React.Component {
                               >
                                 Critics:
                               </Box>
-                              {movie.critics.includes("nan")
-                                ? "No critics available"
-                                : movie.critics}
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.critics.length <= 0
+                                  ? "No critics available"
+                                  : movie.critics.map((critic) => (
+                                      <Box align="left">{critic}</Box>
+                                    ))}
+                              </Box>
                             </Box>
                           </Typography>
                           {
