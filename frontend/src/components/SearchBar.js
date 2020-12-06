@@ -234,8 +234,8 @@ export default class TextBar extends React.Component {
     return (
       <React.Fragment>
         <AppBar position="sticky" style={{ background: "#90a4ae" }}>
-          <Toolbar>
-            <Box flex="display" flexGrow={2} p={1}>
+          <Toolbar style={{width: "100%"}}>
+            <Box flex="display" flexGrow={2}>
               <SearchBar
                 value={this.state.value}
                 onChange={(newValue) => this.setState({ value: newValue })}
