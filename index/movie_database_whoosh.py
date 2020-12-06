@@ -151,6 +151,24 @@ class WhooshSearch(object):
                      'runtime': result['RunTime']})
             
             return returnables, len(results)
+    
+    def query_filter_exists(self, allow_q, new_term):
+        """
+        query_filter_exists checks if the allowed query filter exists or not. If
+        it does, combine the allowed query with the new query term, else return
+        the new query term.
+
+        :param allow_q: allowed query
+        :type allow_q: Query Term object
+        :param new_term: new Query Term object
+        :type new_term: Query Term object
+        :return: Either the combined query terms, or the new query term object
+        :rtype: Query Term object
+        """
+        if(allow_q is None):
+            return new_term
+        else:
+            return allow_q & new_term
 
     def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy):
         ''' provides filters to search across multiple fields based on user input
@@ -175,74 +193,25 @@ class WhooshSearch(object):
             
             user_q = qp.parse(title)
 
-            if Actor and Genre and Director and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and Genre and Director and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Director and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Director and Production and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Director:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director)
-            elif Actor and Genre and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production)
-            elif Actor and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Genre and Director and Production:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and Genre and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Director and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Director and Production and runtime:
-                allow_q = query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Director and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director)and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Production and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre:
-                allow_q = query.Term('Genre', Genre) and query.Term('Actors', Actor)
-            elif Actor and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Actors', Actor)
-            elif Actor and Production:
-                allow_q = query.Term('Production', Production) and query.Term('Actors', Actor)
-            elif Genre and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Genre', Genre)
-            elif Genre and Production:
-                allow_q = query.Term('Production', Production) and query.Term('Genre', Genre)
-            elif Production and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and runtime:
-                allow_q = query.Term('Actors', Actor) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Director and runtime:
-                allow_q = query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and runtime:
-                allow_q = query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Production and runtime:
-                allow_q = query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor:
-                allow_q = query.Term('Actors', Actor)
-            elif Director:
-                allow_q = query.Term('Director', Director)
-            elif Genre:
-                allow_q = query.Term('Genre', Genre)
-            elif Production:
-                allow_q = query.Term('Production', Production)
-            elif runtime:
-                allow_q = query.NumericRange('RunTime', runtime[0], runtime[1])
+            # Begin filtering results based on the given tags
+            if Actor:
+                allow_q = self.query_filter_exists(allow_q, query.Term('Actors', Actor))
+            if Director:
+                allow_q = self.query_filter_exists(allow_q, query.Term('Director', Director))
+            if Genre:
+                allow_q = self.query_filter_exists(allow_q, query.Term('Genre', Genre))
+            if Production:
+                allow_q = self.query_filter_exists(allow_q, query.Term('Production', Production))
+            if runtime:
+                allow_q = self.query_filter_exists(allow_q, query.NumericRange('RunTime', runtime[0], runtime[1]))
 
+            # Begin searching
             if allow_q:
-                results = search.search(user_q, filter=allow_q, limit=100)
+                results = search.search(user_q, filter=allow_q)
             else:
-                results = search.search(user_q, limit=100)
+                results = search.search(user_q)
             
+            # Iterate through results
             for result in results:
                 returnables.append(
                     {'id': result['id'],
