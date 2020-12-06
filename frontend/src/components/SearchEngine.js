@@ -526,7 +526,7 @@ export default class SearchEngine extends React.Component {
     // Render the app
     return (
       <React.Fragment>
-        <Grid container spacing={3}>
+        <Grid container spacing={3} style={{width:"100%"}}>
           <Grid item xs={12}>
             <TextBar
               query={this.handleQueryUpdate}
