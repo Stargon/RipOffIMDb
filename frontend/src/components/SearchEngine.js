@@ -18,8 +18,7 @@ import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import { Alert } from "@material-ui/lab";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
-// Figure out fallback image later
-import FALLBACK_IMAGE from "../images/temp_fallback.png";
+import FALLBACK_IMAGE from "../images/ImageUnavailable.png";
 
 const serverEndpoint = "http://localhost:5000/";
 
