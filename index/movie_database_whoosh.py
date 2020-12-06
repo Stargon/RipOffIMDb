@@ -3,7 +3,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import whoosh
-import csv
+import csv, json
 import os.path
 from whoosh.index import create_in, open_dir, exists_in, Index
 from whoosh.fields import *
@@ -293,6 +293,11 @@ class WhooshSearch(object):
                 if not pd.isnull(df.loc[i, 'Runtime']):
                     runtime = df.loc[i, 'Runtime']
 
+                critic_Score = []
+                criticScoreArray = json.loads(df.loc[i, 'Critic_Score'])
+                for jsonObj in criticScoreArray:
+                	critic_Score.append(jsonObj['Source'] + ': ' + jsonObj['Value'])
+                
                 writer.add_document(id=str(df.loc[i, 'id']),
                                     image_url=str(df.loc[i, 'image_url']),
                                     page_url=str(df.loc[i, 'page_url']),
@@ -303,7 +308,7 @@ class WhooshSearch(object):
                                     Release_date=str(df.loc[i, 'Release_date']),
                                     Genre=str(df.loc[i, 'Genre']),
                                     Awards=str(df.loc[i, 'Awards']),
-                                    Critic_Score=str(df.loc[i, 'Critic_Score']),
+                                    Critic_Score=str(critic_Score),
                                     RunTime=int(runtime))
             writer.commit()
             self.indexer = indexer
