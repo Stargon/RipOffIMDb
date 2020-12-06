@@ -10,7 +10,6 @@ import TextBar from "./SearchBar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
-import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Box from "@material-ui/core/Box";
 import Fab from "@material-ui/core/Fab";
@@ -147,27 +146,32 @@ export default class SearchEngine extends React.Component {
   };
 
   fetchAdvanced = async (update, pageNumber) => {
+    // Atm, basic query also modifies advanced prop, so there is a race 
+    // condition on resetting thte lading page. If able to, refactor to
+    // on SearchEngine to prevent it from happening
     if (update === "") return;
     if (
-      update !== "" &&
       update !== undefined &&
       (!this.isAdvancedUpdate(update) ||
         this.state.changedFuzzy === true ||
         pageNumber !== this.state.nextPage)
     ) {
+      // Get tags from advanced
       let { query, actor, production, director, genre, runtime } = update;
+      // Create request based on tags
       let request = "";
       if (runtime[0] === 0 && runtime[1] === 0) {
+        // Current feature of the backend: there's a difference between requesting a range of 
+        // runtime and query with no runtime. A hack involved
         request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&pageNumber=${this.state.nextPage}`;
       } else {
         request = `${serverEndpoint}?searchType=advanced&keywordQuery=${query}&actor=${actor}&production=${production}&director=${director}&genre=${genre}&runtime=${runtime[0]}-${runtime[1]}&pageNumber=${this.state.nextPage}`;
       }
-      /* CURRENT BUG */
-      // Advanced search will not filter on BK Tree, and will return results from not filtered results
+      // Fuzzy is given, give the proper filters
       if (this.state.isFuzzy === true) {
-        // Fuzzy is given, give the proper filters
         request += `&fuzzySearch=${this.state.isFuzzy}&whoosh=${this.state.toWhoosh}`;
       }
+      // Make sure that the loading screen is set
       await new Promise((accept) =>
         this.setState(
           { isLoaded: false, error: null, advanced: update },
@@ -197,10 +201,13 @@ export default class SearchEngine extends React.Component {
           }
         );
     } else if (this.isAdvancedUpdate(update)) {
+      // update has the same tags, don't change results
       this.setState({ isLoaded: true });
     } else {
+      // Reset results
       this.setState({ isLoaded: true, advanced: "", nextPage: null });
     }
+    // Reset changeFuzzy flag
     this.setState({ changedFuzzy: false });
   };
 
@@ -209,6 +216,7 @@ export default class SearchEngine extends React.Component {
   };
 
   handleViewClick = (url) => {
+    // Given a url, open a new tab
     window.open(url, "_blank");
   };
 
@@ -246,59 +254,176 @@ export default class SearchEngine extends React.Component {
       // do not render
       return null;
     }
+    // Make sure state has been changed
     // Render all the items from the fetch results
     return (
       <Grid item xs={12}>
         <CssBaseline />
         <main>
-          <Container >
+          <Container>
             {/* End hero unit */}
             <Grid container spacing={4} alignItems="stretch">
               {
                 // From example constant, map a card for each element
                 this.state.results.map((movie) => (
                   <Grid item key={movie} xs={12} sm={6} md={4}>
-                    <Card  variant="outlined" style={{height:610, overflow: "auto", overflowY:"auto"}}>
+                    <Card
+                      variant="outlined"
+                      style={{
+                        height: 610,
+                        overflow: "auto",
+                        overflowY: "auto",
+                      }}
+                    >
                       <CardMedia
                         component="img"
                         image={movie.image_url}
                         title={movie.title}
                         onError={this.handleImageError}
+                        onClick={() => this.handleViewClick(movie.page_url)}
                       />
                       <CardContent justifyContent="center">
                         {
                           // Render title
                         }
                         <Typography gutterBottom variant="h5" component="h2">
-                          {movie.title}
-                        </Typography>
-                        {
-                          // Render Actors
-                        }
-                        <Typography>
-                          <Box display="flex" flexDirection="row" m={0.5}>
+                          <Box fontWeight="fontWeightBold">{movie.title}</Box>
+                          <Typography gutterBottom variant="h6" component="h3">
                             <Box
-                              fontWeight="fontWeightBold"
-                              justifyContent="left"
+                              fontWeight="fontWeightLight"
+                              fontStyle="oblique"
+                              Box
+                              fontSize={18}
                             >
-                              Actors:
+                              {movie.release_date.includes("nan")
+                                ? "No release date recorded"
+                                : movie.release_date}
                             </Box>
-                            <Box flexGrow={1} pl={2} align="left">
-                              {movie.actors.includes("nan")
-                                ? "No actors listed"
-                                : movie.actors}
+                          </Typography>
+                          {
+                            // Render Actors
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Actors:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.actors.includes("nan")
+                                  ? "No actors listed"
+                                  : movie.actors}
+                              </Box>
                             </Box>
-                          </Box>
-                        </Typography>
-                        <Typography>
-                          {movie.genre.includes("nan")
-                            ? "No genres listed"
-                            : movie.genre}
-                        </Typography>
-                        <Typography>
-                          {movie.runtime === 0
-                            ? "Runtime unavailable"
-                            : `Runtime: ${movie.runtime}`}
+                          </Typography>
+                          {
+                            // Render Directors
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Directors:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.actors.includes("nan")
+                                  ? "No directors listed"
+                                  : movie.director}
+                              </Box>
+                            </Box>
+                          </Typography>
+                          {
+                            // Render Production
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Production:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.production.includes("nan")
+                                  ? "No production company listed"
+                                  : movie.production}
+                              </Box>
+                            </Box>
+                          </Typography>
+                          {
+                            // Render Genre
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Genre:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.genre.includes("nan")
+                                  ? "Uncategorised"
+                                  : movie.genre}
+                              </Box>
+                            </Box>
+                          </Typography>
+                          {
+                            // Render Critics (needs work)
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Critics:
+                              </Box>
+                              {movie.critics.includes("nan")
+                                ? "No critics available"
+                                : movie.critics}
+                            </Box>
+                          </Typography>
+                          {
+                            // Render Awards
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Awards:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.awards.includes("nan")
+                                  ? "No awards given"
+                                  : movie.awards}
+                              </Box>
+                            </Box>
+                          </Typography>
+                          {
+                            // Render Runtime
+                          }
+                          <Typography>
+                            <Box display="flex" flexDirection="row" m={0.5}>
+                              <Box
+                                fontWeight="fontWeightBold"
+                                justifyContent="left"
+                              >
+                                Runtime:
+                              </Box>
+                              <Box flexGrow={1} pl={2} align="left">
+                                {movie.runtime === 0
+                                  ? "Runtime unavailable"
+                                  : `${movie.runtime} minutes`}
+                              </Box>
+                            </Box>
+                          </Typography>
                         </Typography>
                       </CardContent>
                       <CardActions>
@@ -306,6 +431,7 @@ export default class SearchEngine extends React.Component {
                           size="small"
                           onClick={() => this.handleViewClick(movie.page_url)}
                           color="primary"
+                          variant="outlined"
                         >
                           View
                         </Button>
@@ -385,6 +511,7 @@ export default class SearchEngine extends React.Component {
             bottom: 20,
             left: "auto",
             position: "fixed",
+            background: "#90a4ae",
           }}
           onClick={this.handleNextPage}
         >
