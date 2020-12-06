@@ -308,7 +308,7 @@ class WhooshSearch(object):
                                     Release_date=str(df.loc[i, 'Release_date']),
                                     Genre=str(df.loc[i, 'Genre']),
                                     Awards=str(df.loc[i, 'Awards']),
-                                    Critic_Score=str(critic_Score),
+                                    Critic_Score=(critic_Score),
                                     RunTime=int(runtime))
             writer.commit()
             self.indexer = indexer
