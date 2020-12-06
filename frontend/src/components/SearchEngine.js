@@ -532,9 +532,9 @@ export default class SearchEngine extends React.Component {
           advanced={this.handleAdvancedUpdate}
         ></TextBar>
         {loadOrErrorPrompt}
-        <Grid container spacing={3} style={{ width: "100%" }}>
+        <Box justifyContent="center" p={4}>
           {searchResults}
-        </Grid>
+        </Box>
         {prevButton}
         {nextButton}
       </React.Fragment>
