@@ -82,21 +82,24 @@ def results():
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
                 if whooshFuzzy == 'True' or whooshFuzzy == 'true':
+                    # Whoosh Advanced Fuzzy Search
                     r, length = theWhooshSearch.advancedSearch(
-                        keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy)
+                        keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy, page)
                 else:
+                    # BK Tree Advaned Search
                     keywordQuery = keywordQuery.split()
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
                         tempResult, tempLength = theWhooshSearch.advancedSearch(
-                            term[0], actor, production_company, director, genre, runTime, False)
+                            term[0], actor, production_company, director, genre, runTime, False, page)
                         r += tempResult
                         length += tempLength
+                    r = r[page * 10 - 10:page * 10]
             else:
+                # Regular Advanced Search
                 r, length = theWhooshSearch.advancedSearch(
-                    keywordQuery, actor, production_company, director, genre, runTime, False)
-            r = r[page * 10 - 10:page * 10]
+                    keywordQuery, actor, production_company, director, genre, runTime, False, page)
         else:
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
@@ -185,7 +188,7 @@ class WhooshSearch(object):
         else:
             return allow_q & new_term
 
-    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy):
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy, pageNumber):
         ''' provides filters to search across multiple fields based on user input
             query_entered/title is a required field, all other fields are optional
             : var returnables: All results from query
@@ -210,27 +213,28 @@ class WhooshSearch(object):
             user_q = qp.parse(title)
 
             # Begin filtering results based on the given tags
-            if Actor:
+            if Actor != "":
                 allow_q = self.query_filter_exists(
                     allow_q, query.Term('Actors', Actor))
-            if Director:
+            if Director != "":
                 allow_q = self.query_filter_exists(
                     allow_q, query.Term('Director', Director))
-            if Genre:
+            if Genre != "":
                 allow_q = self.query_filter_exists(
                     allow_q, query.Term('Genre', Genre))
-            if Production:
+            if Production != "":
                 allow_q = self.query_filter_exists(
                     allow_q, query.Term('Production', Production))
-            if runtime:
+            if runtime != None:
                 allow_q = self.query_filter_exists(
                     allow_q, query.NumericRange('RunTime', runtime[0], runtime[1]))
 
             # Begin searching
-            if allow_q:
-                results = search.search(user_q, filter=allow_q)
+            if allow_q != None:
+                results = search.search_page(
+                    user_q, int(pageNumber), filter=allow_q)
             else:
-                results = search.search(user_q)
+                results = search.search_page(user_q, int(pageNumber))
 
             # Iterate through results
             for result in results:
