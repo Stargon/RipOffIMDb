@@ -235,18 +235,19 @@ export default class TextBar extends React.Component {
       <React.Fragment>
         <AppBar position="sticky" style={{ background: "#90a4ae" }}>
           <Toolbar>
-            <SearchBar
-              value={this.state.value}
-              onChange={(newValue) => this.setState({ value: newValue })}
-              onRequestSearch={() => {
-                this.onRequestSearchEvent(this.state.value);
-              }}
-              style={{
-                margin: "0 auto",
-                width: "60%",
-              }}
-            />
-
+            <Box flex="display" flexGrow={2} p={1}>
+              <SearchBar
+                value={this.state.value}
+                onChange={(newValue) => this.setState({ value: newValue })}
+                onRequestSearch={() => {
+                  this.onRequestSearchEvent(this.state.value);
+                }}
+                style={{
+                  margin: "0 auto",
+                  width: "100%",
+                }}
+              />
+            </Box>
             <RadioGroup
               row
               aria-label="gender"
