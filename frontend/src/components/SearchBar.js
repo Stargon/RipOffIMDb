@@ -234,6 +234,9 @@ export default class TextBar extends React.Component {
     return (
       <React.Fragment>
         <AppBar position="sticky" style={{ background: "#90a4ae" }}>
+          <Box flex="display" pr={4}>
+            <Typography variant="h2">RipOffIMDb</Typography>
+          </Box>
           <Toolbar style={{ width: "100%" }}>
             <Box flex="display" flexGrow={2}>
               <SearchBar
