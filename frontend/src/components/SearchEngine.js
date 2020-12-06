@@ -372,7 +372,7 @@ export default class SearchEngine extends React.Component {
                             </Box>
                           </Typography>
                           {
-                            // Render Critics 
+                            // Render Critics
                           }
                           <Typography>
                             <Box display="flex" flexDirection="row" m={0.5}>
@@ -526,13 +526,13 @@ export default class SearchEngine extends React.Component {
     // Render the app
     return (
       <React.Fragment>
-        <Grid container spacing={3}>
+        <TextBar
+          query={this.handleQueryUpdate}
+          fuzzy={this.handleFuzzyUpdate}
+          advanced={this.handleAdvancedUpdate}
+        ></TextBar>
+        <Grid container spacing={3} style={{ width: "100%" }}>
           <Grid item xs={12}>
-            <TextBar
-              query={this.handleQueryUpdate}
-              fuzzy={this.handleFuzzyUpdate}
-              advanced={this.handleAdvancedUpdate}
-            ></TextBar>
             {loadOrErrorPrompt}
           </Grid>
           {searchResults}

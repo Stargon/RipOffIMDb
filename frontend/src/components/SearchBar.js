@@ -233,7 +233,7 @@ export default class TextBar extends React.Component {
     }
     return (
       <React.Fragment>
-        <AppBar position="relative" style={{ background: "#90a4ae" }}>
+        <AppBar position="sticky" style={{ background: "#90a4ae" }}>
           <Toolbar>
             <SearchBar
               value={this.state.value}
