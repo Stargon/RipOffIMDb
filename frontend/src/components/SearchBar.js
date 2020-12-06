@@ -8,7 +8,6 @@ import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Fab";
 import FindReplaceIcon from "@material-ui/icons/FindReplace";
-
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -216,6 +215,7 @@ export default class TextBar extends React.Component {
               size="small"
               color="secondary"
               onClick={this.handleAdvancedUpdateChanges}
+              disableElevation
             >
               <FindReplaceIcon size="small" />
               Advanced Search
@@ -233,7 +233,7 @@ export default class TextBar extends React.Component {
     }
     return (
       <React.Fragment>
-        <AppBar position="relative">
+        <AppBar position="relative" style={{ background: "#90a4ae" }}>
           <Toolbar>
             <SearchBar
               value={this.state.value}
