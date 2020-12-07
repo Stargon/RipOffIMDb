@@ -166,7 +166,7 @@ class WhooshSearch(object):
             query = query.parse(query_entered)
             
             if pageNumber == -1:
-                results = search.search(query)
+                results = search.search(query, limit=None)
             else:
                 results = search.search_page(query, int(pageNumber))
 
@@ -247,12 +247,12 @@ class WhooshSearch(object):
 
             # Begin searching
             if allow_q != None and pageNumber == -1:
-                results = search.search(user_q, filter=allow_q)
+                results = search.search(user_q, filter=allow_q, limit=None)
             elif allow_q != None:
                 results = search.search_page(
                     user_q, int(pageNumber), filter=allow_q)
             elif pageNumber == -1:
-                results = search.search(user_q)
+                results = search.search(user_q, limit=None)
             else:
                 results = search.search_page(user_q, int(pageNumber))
 
