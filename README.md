@@ -25,6 +25,7 @@ pip3 install Flask
 pip3 install flask-cors
 pip3 install Whoosh
 pip3 install pandas
+pip3 install nltk
 ```
 
 #### Running the Server
