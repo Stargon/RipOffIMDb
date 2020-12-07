@@ -13,6 +13,7 @@ from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 import pandas as pd
 from fuzzy_search.BKTree import BKTree
+import sys
 
 app = Flask(__name__,
             template_folder='./frontend/src')
@@ -22,6 +23,16 @@ fuzzy_tree = None
 
 csv_file = 'database/database_master.csv'
 
+to_rebuild = False
+
+def createBKTree():
+    vocab = []
+    with open('database/vocabulary.csv', encoding='utf-8', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for line in reader:
+            vocab.append(line[0])
+
+    return BKTree(vocab, 0)
 
 @app.before_first_request
 def before_first_request_func():
@@ -34,12 +45,13 @@ def before_first_request_func():
 
     if not fuzzy_tree:
         print('Building fuzzy search')
-        fuzzy_tree = BKTree(decode_file_path='fuzzy_search/encoded_tree.csv')
+        if(to_rebuild):
+            fuzzy_tree = createBKTree()
+        else: 
+            fuzzy_tree = BKTree(decode_file_path='fuzzy_search/encoded_tree.csv')
         print('Fuzzy search completed')
 
 # homepage route
-
-
 @app.route('/', methods=['GET', 'POST'])
 def results():
     """ route for fetch request from front-end
@@ -92,7 +104,7 @@ def results():
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
                         tempResult, tempLength = theWhooshSearch.advancedSearch(
-                            term[0], actor, production_company, director, genre, runTime, False, page)
+                            term[0], actor, production_company, director, genre, runTime, False, pageNumber=-1)
                         r += tempResult
                         length += tempLength
                     r = r[page * 10 - 10:page * 10]
@@ -112,7 +124,7 @@ def results():
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
                         tempResult, tempLength = theWhooshSearch.basicSearch(
-                            term[0], False, page)
+                            term[0], False, pageNumber=-1)
                         r += tempResult
                         length += tempLength
                     r = r[page * 10 - 10:page * 10]
@@ -152,7 +164,11 @@ class WhooshSearch(object):
                     ['Title', 'Actors'], schema=self.indexer.schema)
 
             query = query.parse(query_entered)
-            results = search.search_page(query, int(pageNumber))
+            
+            if pageNumber == -1:
+                results = search.search(query)
+            else:
+                results = search.search_page(query, int(pageNumber))
 
             for result in results:
                 returnables.append({'id': result['id'],
@@ -230,9 +246,13 @@ class WhooshSearch(object):
                     allow_q, query.NumericRange('RunTime', runtime[0], runtime[1]))
 
             # Begin searching
-            if allow_q != None:
+            if allow_q != None and pageNumber == -1:
+                results = search.search(user_q, filter=allow_q)
+            elif allow_q != None:
                 results = search.search_page(
                     user_q, int(pageNumber), filter=allow_q)
+            elif pageNumber == -1:
+                results = search.search(user_q)
             else:
                 results = search.search_page(user_q, int(pageNumber))
 
@@ -315,6 +335,9 @@ class WhooshSearch(object):
 
 if __name__ == '__main__':
     global theWhooshSearch
+    # To specify rebuilding the tree 
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "build":
+        to_rebuild = True
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
     app.before_first_request(before_first_request_func)
