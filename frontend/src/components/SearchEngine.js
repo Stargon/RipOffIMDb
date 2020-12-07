@@ -39,6 +39,7 @@ export default class SearchEngine extends React.Component {
       nextPage: null,
       prevPage: 0,
       process: false,
+      home: false
     };
     // Bind functions to this class
     this.handleQueryUpdate = this.handleQueryUpdate.bind(this);
@@ -52,6 +53,7 @@ export default class SearchEngine extends React.Component {
     this.handleFuzzyUpdate = this.handleFuzzyUpdate.bind(this);
     this.handleNextPage = this.handleNextPage.bind(this);
     this.handlePrevPage = this.handlePrevPage.bind(this);
+    this.handleFirstPage = this.handleFirstPage.bind(this);
   }
 
   handleFuzzyUpdate = (fuzzyUpdate) => {
@@ -245,6 +247,19 @@ export default class SearchEngine extends React.Component {
     } else {
       await this.fetchAdvanced(this.state.advanced, oldPrev);
     }
+  };
+
+  handleFirstPage = async () => {
+    const dummyPage = -1;
+    await new Promise((accept) =>
+      this.setState({ nextPage: 1, home: true }, accept)
+    );
+    if (this.state.advanced === "") {
+      await this.fetchQuery(this.state.query, dummyPage);
+    } else {
+      await this.fetchAdvanced(this.state.advanced, dummyPage);
+    }
+    await new Promise((accept) => this.setState({ home: false }, accept));
   };
 
   renderSearch = () => {
@@ -485,10 +500,40 @@ export default class SearchEngine extends React.Component {
     // Render pagination if able
     let prevButton = null;
     let nextButton = null;
-    if (this.state.prevPage > 0 && this.state.results.length > 0) {
+    let homeButton = null;
+    if (
+      ((this.state.nextPage === null && this.state.prevPage > 1) ||
+        (this.state.prevPage > 1 && this.state.nextPage > 1)) &&
+      this.state.results.length > 0
+    ) {
+      homeButton = (
+        <Fab
+          color="secondary"
+          variant="extended"
+          style={{
+            margin: 0,
+            top: "auto",
+            right: "auto",
+            bottom: 80,
+            left: 20,
+            position: "fixed",
+          }}
+          onClick={this.handleFirstPage}
+        >
+          <NavigateBeforeIcon />
+          <Typography>First</Typography>
+        </Fab>
+      );
+    }
+    if (
+      this.state.prevPage > 0 &&
+      this.state.results.length > 0 &&
+      !this.state.home
+    ) {
       prevButton = (
         <Fab
           color="secondary"
+          variant="extended"
           style={{
             margin: 0,
             top: "auto",
@@ -500,13 +545,19 @@ export default class SearchEngine extends React.Component {
           onClick={this.handlePrevPage}
         >
           <NavigateBeforeIcon />
+          <Typography>Back</Typography>
         </Fab>
       );
     }
-    if (this.state.nextPage !== null && this.state.results.length > 0) {
+    if (
+      this.state.nextPage !== null &&
+      this.state.results.length > 0 &&
+      !this.state.home
+    ) {
       nextButton = (
         <Fab
           color="primary"
+          variant="extended"
           style={{
             margin: 0,
             top: "auto",
@@ -518,6 +569,7 @@ export default class SearchEngine extends React.Component {
           }}
           onClick={this.handleNextPage}
         >
+          <Typography>Next</Typography>
           <NavigateNextIcon />
         </Fab>
       );
@@ -535,6 +587,7 @@ export default class SearchEngine extends React.Component {
         <Box justifyContent="center" p={4}>
           {searchResults}
         </Box>
+        {homeButton}
         {prevButton}
         {nextButton}
       </React.Fragment>
