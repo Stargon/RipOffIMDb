@@ -2,6 +2,7 @@
 
 import whoosh, csv, json, os.path, sys, nltk
 import pandas as pd
+import nltk
 from nltk.corpus import stopwords
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -11,6 +12,12 @@ from whoosh.qparser import QueryParser, MultifieldParser, query
 from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 from fuzzy_search.BKTree import BKTree
+
+# Download corpus if missing
+try:
+    nltk.data.find("corpora/stopwords")
+except LookupError:
+    nltk.download("stopwords")
 
 app = Flask(__name__,
             template_folder='./frontend/src')
