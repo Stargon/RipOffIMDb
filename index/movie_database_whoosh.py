@@ -1,19 +1,16 @@
 #!/usr/bin/python
 
+import whoosh, csv, json, os.path, sys, nltk
+import pandas as pd
+from nltk.corpus import stopwords
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import whoosh
-import csv
-import json
-import os.path
 from whoosh.index import create_in, open_dir, exists_in, Index
 from whoosh.fields import *
 from whoosh.qparser import QueryParser, MultifieldParser, query
 from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
-import pandas as pd
 from fuzzy_search.BKTree import BKTree
-import sys
 
 app = Flask(__name__,
             template_folder='./frontend/src')
@@ -24,6 +21,8 @@ fuzzy_tree = None
 csv_file = 'database/database_master.csv'
 
 to_rebuild = False
+
+stop_words = set(stopwords.words('english'))
 
 def createBKTree():
     vocab = []
@@ -85,6 +84,8 @@ def results():
     page = int(data.get('pageNumber'))
 
     if keywordQuery:
+        keywordQuery = removeStop(keywordQuery)
+
         if searchType == 'advanced':
             actor = data.get('actor')
             production_company = data.get('production')
@@ -98,7 +99,7 @@ def results():
                     r, length = theWhooshSearch.advancedSearch(
                         keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy, page)
                 else:
-                    # BK Tree Advaned Search
+                    # BK Tree Advanced Search
                     keywordQuery = keywordQuery.split()
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
@@ -144,6 +145,14 @@ def results():
 def nextPage(length, pageNumber):
     return (int(length) - int(pageNumber) * 10) > 1
 
+def removeStop(queryArray):
+    query = queryArray.split()
+    phrase = ''
+    for word in query:
+            if word not in stop_words:
+                phrase += word + ' '
+    return phrase
+
 
 class WhooshSearch(object):
     def __init__(self):
@@ -151,7 +160,6 @@ class WhooshSearch(object):
 
     def basicSearch(self, query_entered, whooshFuzzy, pageNumber):
         """ Basic search on the whoosh database, query is searched on the title and actors field
-            : var returnables: 10 results from query based on pageNumber 
         """
         returnables = []
         with self.indexer.searcher() as search:
@@ -207,7 +215,6 @@ class WhooshSearch(object):
     def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy, pageNumber):
         ''' provides filters to search across multiple fields based on user input
             query_entered/title is a required field, all other fields are optional
-            : var returnables: All results from query
         '''
         title = query_entered
 
