@@ -1,6 +1,7 @@
 from .BKTree_Node import BKTreeNode
 import csv
 
+
 class BKTree(object):
     def __init__(self, vocabulary=None, root_index=0, decode_file_path=''):
         if decode_file_path == '' and vocabulary is not None:
