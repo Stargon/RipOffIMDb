@@ -8,7 +8,6 @@ import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Fab";
 import FindReplaceIcon from "@material-ui/icons/FindReplace";
-
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -93,9 +92,9 @@ export default class TextBar extends React.Component {
     }
   };
 
-  handleAdvancedUpdateChanges = () => {
+  handleAdvancedUpdateChanges = (query) => {
     let tags = {
-      query: this.state.query,
+      query: query,
       actor: this.state.actor.toLowerCase(),
       production: this.state.production.toLowerCase(),
       director: this.state.director.toLowerCase(),
@@ -103,7 +102,7 @@ export default class TextBar extends React.Component {
       runtime: this.state.runtime,
     };
     this.props.advanced(tags);
-    this.setState({ advanced: tags });
+    this.setState({ query: query, advanced: tags });
   };
 
   handleActorChange(event) {
@@ -215,7 +214,8 @@ export default class TextBar extends React.Component {
               variant="contained"
               size="small"
               color="secondary"
-              onClick={this.handleAdvancedUpdateChanges}
+              onClick={() => this.handleAdvancedUpdateChanges(this.state.value)}
+              disableElevation
             >
               <FindReplaceIcon size="small" />
               Advanced Search
@@ -233,20 +233,24 @@ export default class TextBar extends React.Component {
     }
     return (
       <React.Fragment>
-        <AppBar position="relative">
-          <Toolbar>
-            <SearchBar
-              value={this.state.value}
-              onChange={(newValue) => this.setState({ value: newValue })}
-              onRequestSearch={() => {
-                this.onRequestSearchEvent(this.state.value);
-              }}
-              style={{
-                margin: "0 auto",
-                width: "60%",
-              }}
-            />
-
+        <AppBar position="sticky" style={{ background: "#90a4ae" }}>
+          <Box flex="display" pr={4}>
+            <Typography variant="h2">RipOffIMDb</Typography>
+          </Box>
+          <Toolbar style={{ width: "100%" }}>
+            <Box flex="display" flexGrow={2}>
+              <SearchBar
+                value={this.state.value}
+                onChange={(newValue) => this.setState({ value: newValue })}
+                onRequestSearch={() => {
+                  this.onRequestSearchEvent(this.state.value);
+                }}
+                style={{
+                  margin: "0 auto",
+                  width: "100%",
+                }}
+              />
+            </Box>
             <RadioGroup
               row
               aria-label="gender"

@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import whoosh
 import csv
+import json
 import os.path
 from whoosh.index import create_in, open_dir, exists_in, Index
 from whoosh.fields import *
@@ -12,6 +13,7 @@ from whoosh.query import NumericRange, FuzzyTerm
 from whoosh import qparser
 import pandas as pd
 from fuzzy_search.BKTree import BKTree
+import sys
 
 app = Flask(__name__,
             template_folder='./frontend/src')
@@ -20,6 +22,17 @@ CORS(app)
 fuzzy_tree = None
 
 csv_file = 'database/database_master.csv'
+
+to_rebuild = False
+
+def createBKTree():
+    vocab = []
+    with open('database/vocabulary.csv', encoding='utf-8', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for line in reader:
+            vocab.append(line[0])
+
+    return BKTree(vocab, 0)
 
 @app.before_first_request
 def before_first_request_func():
@@ -32,7 +45,10 @@ def before_first_request_func():
 
     if not fuzzy_tree:
         print('Building fuzzy search')
-        fuzzy_tree = createBKTree()
+        if(to_rebuild):
+            fuzzy_tree = createBKTree()
+        else: 
+            fuzzy_tree = BKTree(decode_file_path='fuzzy_search/encoded_tree.csv')
         print('Fuzzy search completed')
 
 # homepage route
@@ -78,51 +94,56 @@ def results():
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
                 if whooshFuzzy == 'True' or whooshFuzzy == 'true':
-                    r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy)
+                    # Whoosh Advanced Fuzzy Search
+                    r, length = theWhooshSearch.advancedSearch(
+                        keywordQuery, actor, production_company, director, genre, runTime, whooshFuzzy, page)
                 else:
+                    # BK Tree Advaned Search
                     keywordQuery = keywordQuery.split()
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
-                        tempResult, tempLength = theWhooshSearch.advancedSearch(term[0], actor, production_company, director, genre, runTime, False)
+                        tempResult, tempLength = theWhooshSearch.advancedSearch(
+                            term[0], actor, production_company, director, genre, runTime, False, pageNumber=-1)
                         r += tempResult
                         length += tempLength
+                    r = r[page * 10 - 10:page * 10]
             else:
-                r, length = theWhooshSearch.advancedSearch(keywordQuery, actor, production_company, director, genre, runTime, False)
-            r = r[ page * 10 - 10:page * 10 ]  
+                # Regular Advanced Search
+                r, length = theWhooshSearch.advancedSearch(
+                    keywordQuery, actor, production_company, director, genre, runTime, False, page)
         else:
             if fuzzySearch == 'True' or fuzzySearch == 'true':
                 whooshFuzzy = data.get('whoosh')
                 if whooshFuzzy == 'True' or whooshFuzzy == 'true':
-                    r, length = theWhooshSearch.basicSearch(keywordQuery, whooshFuzzy, page)
+                    r, length = theWhooshSearch.basicSearch(
+                        keywordQuery, whooshFuzzy, page)
                 else:
                     keywordQuery = keywordQuery.split()
                     for word in keywordQuery:
                         fuzzy_terms += fuzzy_tree.autocorrect(word, 1)
                     for term in fuzzy_terms:
-                        tempResult, tempLength = theWhooshSearch.basicSearch(term[0], False, page)
+                        tempResult, tempLength = theWhooshSearch.basicSearch(
+                            term[0], False, pageNumber=-1)
                         r += tempResult
                         length += tempLength
-                    r = r[ page * 10 - 10:page * 10 ]  
+                    r = r[page * 10 - 10:page * 10]
             else:
-                r, length = theWhooshSearch.basicSearch(keywordQuery, False, page)
+                r, length = theWhooshSearch.basicSearch(
+                    keywordQuery, False, page)
 
-    nextPageNumber = page + 1
+    # Check if there are new pages
+    if nextPage(length, page):
+        nextPageNumber = page + 1
     previous = page - 1
-    returnResults = {'nextPage': nextPageNumber, 'prevPage': previous, 'results': r}
+    returnResults = {'nextPage': nextPageNumber,
+                     'prevPage': previous, 'results': r}
     return jsonify(returnResults)
 
-def createBKTree():
-    vocab = []
-    with open('database/vocabulary.csv', encoding='utf-8', newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        for line in reader:
-            vocab.append(line[0])
-
-    return BKTree(vocab, 0)
 
 def nextPage(length, pageNumber):
     return (int(length) - int(pageNumber) * 10) > 1
+
 
 class WhooshSearch(object):
     def __init__(self):
@@ -134,32 +155,56 @@ class WhooshSearch(object):
         """
         returnables = []
         with self.indexer.searcher() as search:
-            
+
             if whooshFuzzy == 'True' or whooshFuzzy == 'true':
-                query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema, termclass=FuzzyTerm)
+                query = MultifieldParser(
+                    ['Title', 'Actors'], schema=self.indexer.schema, termclass=FuzzyTerm)
             else:
-                query = MultifieldParser(['Title', 'Actors'], schema=self.indexer.schema)
-            
+                query = MultifieldParser(
+                    ['Title', 'Actors'], schema=self.indexer.schema)
+
             query = query.parse(query_entered)
-            results = search.search_page(query, int(pageNumber))
+            
+            if pageNumber == -1:
+                results = search.search(query, limit=None)
+            else:
+                results = search.search_page(query, int(pageNumber))
 
             for result in results:
                 returnables.append({'id': result['id'],
-                     'page_url': result['page_url'],
-                     'image_url': result['image_url'],
-                     'title': result['Title'],
-                     'actors': result['Actors'],
-                     'production': result['Production'],
-                     'director': result['Director'],
-                     'release_date': result['Release_date'],
-                     'genre': result['Genre'],
-                     'awards': result['Awards'],
-                     'critics': result['Critic_Score'],
-                     'runtime': result['RunTime']})
-            
+                                    'page_url': result['page_url'],
+                                    'image_url': result['image_url'],
+                                    'title': result['Title'],
+                                    'actors': result['Actors'],
+                                    'production': result['Production'],
+                                    'director': result['Director'],
+                                    'release_date': result['Release_date'],
+                                    'genre': result['Genre'],
+                                    'awards': result['Awards'],
+                                    'critics': result['Critic_Score'],
+                                    'runtime': result['RunTime']})
+
             return returnables, len(results)
 
-    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy):
+    def query_filter_exists(self, allow_q, new_term):
+        """
+        query_filter_exists checks if the allowed query filter exists or not. If
+        it does, combine the allowed query with the new query term, else return
+        the new query term.
+
+        :param allow_q: allowed query
+        :type allow_q: Query Term object
+        :param new_term: new Query Term object
+        :type new_term: Query Term object
+        :return: Either the combined query terms, or the new query term object
+        :rtype: Query Term object
+        """
+        if(allow_q is None):
+            return new_term
+        else:
+            return allow_q & new_term
+
+    def advancedSearch(self, query_entered, Actor, Production, Director, Genre, runtime, whooshFuzzy, pageNumber):
         ''' provides filters to search across multiple fields based on user input
             query_entered/title is a required field, all other fields are optional
             : var returnables: All results from query
@@ -167,89 +212,51 @@ class WhooshSearch(object):
         title = query_entered
 
         returnables = []
-        
+
         if runtime:
             runtime = runtime.split('-')
         # reset filter before each search
         allow_q = None
 
         with self.indexer.searcher() as search:
-            
+
             if whooshFuzzy == 'True' or whooshFuzzy == 'true':
-                qp = qparser.QueryParser('Title', self.indexer.schema, termclass=FuzzyTerm)
+                qp = qparser.QueryParser(
+                    'Title', self.indexer.schema, termclass=FuzzyTerm)
             else:
                 qp = qparser.QueryParser('Title', self.indexer.schema)
-            
+
             user_q = qp.parse(title)
 
-            if Actor and Genre and Director and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and Genre and Director and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Director and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Director and Production and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre and Director:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Director', Director)
-            elif Actor and Genre and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.Term('Production', Production)
-            elif Actor and Director and Production:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Genre and Director and Production:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and Genre and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Director and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Production and runtime:
-                allow_q = query.Term('Actor', Actor) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Director and Production and runtime:
-                allow_q = query.Term('Director', Director) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Director and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Director', Director)and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and Production and runtime:
-                allow_q = query.Term('Genre', Genre) and query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor and Genre:
-                allow_q = query.Term('Genre', Genre) and query.Term('Actors', Actor)
-            elif Actor and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Actors', Actor)
-            elif Actor and Production:
-                allow_q = query.Term('Production', Production) and query.Term('Actors', Actor)
-            elif Genre and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Genre', Genre)
-            elif Genre and Production:
-                allow_q = query.Term('Production', Production) and query.Term('Genre', Genre)
-            elif Production and Director:
-                allow_q = query.Term('Director', Director) and query.Term('Production', Production)
-            elif Actor and runtime:
-                allow_q = query.Term('Actors', Actor) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Director and runtime:
-                allow_q = query.Term('Director', Director) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Genre and runtime:
-                allow_q = query.Term('Genre', Genre) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Production and runtime:
-                allow_q = query.Term('Production', Production) and query.NumericRange('RunTime', runtime[0], runtime[1])
-            elif Actor:
-                allow_q = query.Term('Actors', Actor)
-            elif Director:
-                allow_q = query.Term('Director', Director)
-            elif Genre:
-                allow_q = query.Term('Genre', Genre)
-            elif Production:
-                allow_q = query.Term('Production', Production)
-            elif runtime:
-                allow_q = query.NumericRange('RunTime', runtime[0], runtime[1])
+            # Begin filtering results based on the given tags
+            if Actor != "":
+                allow_q = self.query_filter_exists(
+                    allow_q, query.Term('Actors', Actor))
+            if Director != "":
+                allow_q = self.query_filter_exists(
+                    allow_q, query.Term('Director', Director))
+            if Genre != "":
+                allow_q = self.query_filter_exists(
+                    allow_q, query.Term('Genre', Genre))
+            if Production != "":
+                allow_q = self.query_filter_exists(
+                    allow_q, query.Term('Production', Production))
+            if runtime != None:
+                allow_q = self.query_filter_exists(
+                    allow_q, query.NumericRange('RunTime', runtime[0], runtime[1]))
 
-            if allow_q:
-                results = search.search(user_q, filter=allow_q, limit=100)
+            # Begin searching
+            if allow_q != None and pageNumber == -1:
+                results = search.search(user_q, filter=allow_q, limit=None)
+            elif allow_q != None:
+                results = search.search_page(
+                    user_q, int(pageNumber), filter=allow_q)
+            elif pageNumber == -1:
+                results = search.search(user_q, limit=None)
             else:
-                results = search.search(user_q, limit=100)
-            
+                results = search.search_page(user_q, int(pageNumber))
+
+            # Iterate through results
             for result in results:
                 returnables.append(
                     {'id': result['id'],
@@ -264,7 +271,7 @@ class WhooshSearch(object):
                      'awards': result['Awards'],
                      'critics': result['Critic_Score'],
                      'runtime': result['RunTime']})
-            
+
             return returnables, len(results)
 
     def index(self):
@@ -300,6 +307,12 @@ class WhooshSearch(object):
                 if not pd.isnull(df.loc[i, 'Runtime']):
                     runtime = df.loc[i, 'Runtime']
 
+                critic_Score = []
+                criticScoreArray = json.loads(df.loc[i, 'Critic_Score'])
+                for jsonObj in criticScoreArray:
+                    critic_Score.append(
+                        jsonObj['Source'] + ': ' + jsonObj['Value'])
+
                 writer.add_document(id=str(df.loc[i, 'id']),
                                     image_url=str(df.loc[i, 'image_url']),
                                     page_url=str(df.loc[i, 'page_url']),
@@ -307,10 +320,11 @@ class WhooshSearch(object):
                                     Actors=str(df.loc[i, 'Actors']),
                                     Production=str(df.loc[i, 'Production']),
                                     Director=str(df.loc[i, 'Director']),
-                                    Release_date=str(df.loc[i, 'Release_date']),
+                                    Release_date=str(
+                                        df.loc[i, 'Release_date']),
                                     Genre=str(df.loc[i, 'Genre']),
                                     Awards=str(df.loc[i, 'Awards']),
-                                    Critic_Score=str(df.loc[i, 'Critic_Score']),
+                                    Critic_Score=(critic_Score),
                                     RunTime=int(runtime))
             writer.commit()
             self.indexer = indexer
@@ -318,9 +332,13 @@ class WhooshSearch(object):
         else:
             self.indexer = open_dir('indexdir')
 
+
 if __name__ == '__main__':
     global theWhooshSearch
+    # To specify rebuilding the tree 
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "build":
+        to_rebuild = True
     theWhooshSearch = WhooshSearch()
     theWhooshSearch.index()
     app.before_first_request(before_first_request_func)
-    app.run(debug=True)
+    app.run(debug=False)
